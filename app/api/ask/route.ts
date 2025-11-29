@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
 
     const { data: chunks, error } = await supabase.rpc("match_blr_chunks", {
       query_embedding: queryEmbedding,
-      match_threshold: 0.5,
-      match_count: 8
+      match_threshold: 0.7,
+      match_count: 6
     });
 
     if (error) {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (!chunks || chunks.length === 0) {
       const fallbackAnswer = [
         "1) TL;DR:",
-        "- Unclear from BLR/BASC.",
+        "- Unclear from BLR / BASC.",
         "",
         "2) What the rules say:",
         "- I couldn't find any clearly relevant rules in the indexed Bidline Rules / BASC extracts.",
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         "- For anything borderline or career-critical, the safest course is to speak directly with BASC or Scheduling and follow their written guidance.",
         "",
         "What to say to Global Ops:",
-        '"BidlineBuddy couldn\'t find a clear rule covering this situation in BLR/BASC. I\'d like to check with you or BASC for the official position, please."'
+        '"BidlineBuddy could not find a clear rule covering this situation in BLR / BASC. I would like to check with you or BASC for the official position, please."'
       ].join("\n");
 
       return NextResponse.json({ answer: fallbackAnswer, chunks: [] });
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      temperature: 0.1,
+      temperature: 0,
       messages: [
         {
           role: "system",
@@ -92,9 +92,12 @@ You are BidlineBuddy, an assistant specialising in BA Bidline Rules and BASC gui
 Hard safety rules:
 - You MUST base every answer ONLY on the provided context chunks, which are labelled [1], [2], etc.
 - If the context does NOT clearly answer the question, you MUST say this explicitly rather than guessing.
-- NEVER invent BLR/BASC rules, numbers, or pages that are not shown in the context.
+- NEVER invent BLR / BASC rules, numbers, definitions, or pages that are not shown in the context.
 - If different chunks appear to conflict or be ambiguous, you MUST say that and advise contacting BASC.
-- If the question is clearly outside the scope of BLR/BASC (e.g. medical, HR disputes, pay scales), say it is outside scope and advise the right channel.
+- If a chunk is clearly about a different duty type or scenario (e.g. hotel report vs home standby, airport report vs home standby, long-haul vs short-haul, reserve vs open time), you MUST NOT directly apply that rule to the question. Instead, you should say that the section appears to be about a different context and treat it as not answering the question.
+- When the pilot's question clearly mentions a specific context (e.g. "home standby", "RPH", "hotel report", "airport report"), you should prefer chunks that explicitly mention that same context and down-weight or ignore chunks that clearly refer to something else.
+- Always prefer chunks where the wording closely matches the key terms in the pilot's question (e.g. "home standby", "RPH", "open time", "disruption") over more generic or different-scenario chunks.
+- If the question is clearly outside the scope of BLR / BASC (e.g. medical, HR disputes, pay scales), say it is outside scope and advise the right channel.
 
 When you reference specific rules, refer back to the chunk labels [1], [2], etc, and any pages that appear in the context, e.g. "From [1], BLR Feb 2025 p.104: …" or "From [3], BASC 2022 p.17: …".
 
@@ -102,8 +105,8 @@ Format every response exactly as:
 
 1) TL;DR:
 - One sentence.
-- Use "Yes", "No", or "Unclear from BLR/BASC" where possible.
-- If you are not confident, choose "Unclear from BLR/BASC".
+- Use "Yes", "No", or "Unclear from BLR / BASC" where possible.
+- If you are not confident, choose "Unclear from BLR / BASC".
 
 2) What the rules say:
 - 3–6 bullet points.
@@ -131,7 +134,7 @@ If the context does not contain enough information to confidently answer, you MU
         },
         {
           role: "user",
-          content: `Here are the most relevant rule extracts from BLR/BASC:\n\n${contextText}\n\nPilot question: ${query}\n\nAnswer using ONLY these extracts. If they do not clearly answer, say so.`
+          content: `Here are the most relevant rule extracts from BLR / BASC:\n\n${contextText}\n\nPilot question: ${query}\n\nAnswer using ONLY these extracts. If they do not clearly answer, say so.`
         }
       ]
     });

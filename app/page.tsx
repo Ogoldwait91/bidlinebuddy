@@ -22,7 +22,7 @@ function getConfidence(sources: SourceChunk[]) {
     return {
       label: "Unknown",
       color: "#94a3b8",
-      detail: "No matching rules were found above the similarity threshold."
+      detail: "No strong matches were found in the indexed rules. Treat this as a steer only and check with BASC."
     };
   }
 
@@ -34,7 +34,7 @@ function getConfidence(sources: SourceChunk[]) {
     return {
       label: "Unknown",
       color: "#94a3b8",
-      detail: "Similarity scores are not available for these matches."
+      detail: "Similarity scores are not available for these matches. Treat this as a steer only and check with BASC."
     };
   }
 
@@ -99,7 +99,7 @@ function getFollowups(question: string): string[] {
     ];
   }
 
-  if (q.includes("open time") || q.includes("open-time") || q.includes("open time")) {
+  if (q.includes("open time") || q.includes("open-time")) {
     return [
       "In what order is open time allocated?",
       "Can open time be used to replace a standby duty?",
@@ -107,7 +107,6 @@ function getFollowups(question: string): string[] {
     ];
   }
 
-  // default generic
   return [
     "What if this scenario happens more than once?",
     "How does this interact with disruption or reserve?",
@@ -133,8 +132,7 @@ function parseAnswer(answer: string): ParsedAnswer {
     script: ""
   };
 
-  let section: "none" | "tldr" | "rules" | "gaps" | "pragmatic" | "script" =
-    "none";
+  let section: "none" | "tldr" | "rules" | "gaps" | "pragmatic" | "script" = "none";
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -252,7 +250,7 @@ export default function Home() {
       if (!res.ok || data.error) {
         setError(
           data.error ||
-            "Something went wrong contacting BidlineBuddy. Please try again."
+            "Something went wrong talking to BidlineBuddy. Please try again."
         );
       } else {
         const answer: string =
@@ -299,7 +297,6 @@ export default function Home() {
   };
 
   const handleFollowupClick = (followup: string) => {
-    // NEW: replace the question with the follow-up only
     setQuestion(followup);
   };
 
@@ -379,8 +376,8 @@ export default function Home() {
                 }}
               >
                 Your conversational assistant for BA Bidline Rules and BASC
-                guides. Ask in plain English; BidlineBuddy will quote the
-                documents and suggest what to say to Global Ops. For anything
+                guides. Ask in plain English and BidlineBuddy will quote the
+                rules and suggest what to say to Global Ops. For anything
                 unusual or career-critical, always confirm with BASC.
               </p>
             </div>
@@ -682,9 +679,9 @@ export default function Home() {
                             color: "#e5e7eb"
                           }}
                         >
-                          {parsed.pragmatic.map((p, idx) => (
-                            <li key={idx}>{p}</li>
-                          ))}
+                            {parsed.pragmatic.map((p, idx) => (
+                              <li key={idx}>{p}</li>
+                            ))}
                         </ul>
                       </div>
                     )}
@@ -932,8 +929,8 @@ export default function Home() {
               onKeyDown={handleKeyDown}
               placeholder={
                 loading
-                  ? "Hold on, I am working on your last question…"
-                  : "Ask BidlineBuddy anything about BLR/BASC. Press Enter to send, Shift+Enter for a new line."
+                  ? "Working on your last question…"
+                  : "Ask BidlineBuddy anything about BLR / BASC. Press Enter to send, Shift+Enter for a new line."
               }
               style={{
                 width: "100%",
@@ -965,8 +962,9 @@ export default function Home() {
                   color: "#9ca3af"
                 }}
               >
-                BidlineBuddy summarises BLR Feb 2025 + BASC 2022. Always confirm
-                anything unusual with BASC / Scheduling.
+                BidlineBuddy summarises BLR Feb 2025 and BASC 2022. Always
+                confirm anything unusual or career-critical with BASC /
+                Scheduling.
               </span>
 
               <button
