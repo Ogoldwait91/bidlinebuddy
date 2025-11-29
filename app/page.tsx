@@ -1312,18 +1312,6 @@ export default function Home() {
               >
                 {loading ? "Thinking…" : "Ask BidlineBuddy"}
               </button>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "#9ca3af",
-                  textAlign: isMobile ? "left" : "right",
-                  flex: 1
-                }}
-              >
-                BidlineBuddy summarises BLR Feb 2025 and BASC 2022. Always
-                confirm anything unusual or career-critical with BASC /
-                Scheduling.
-              </span>
             </div>
           </div>
         </section>
@@ -1339,10 +1327,11 @@ export default function Home() {
           maxWidth: 900
         }}
       >
-        BidlineBuddy is an unofficial tool created by a BA pilot. It does not
-        replace BLR / BASC, the FOM or advice from BASC, Scheduling or your
-        manager.
+        BidlineBuddy is an unofficial tool created by a BA pilot. It does not replace BLR / BASC, the FOM or advice from BASC, Scheduling or your manager.<br /> BidlineBuddy summarises BLR Feb 2025 and BASC 2022. Always confirm anything unusual or career-critical with BASC / Scheduling.
       </div>
     </main>
   );
 }
+
+
+
