@@ -414,7 +414,7 @@ export default function Home() {
   if (!authorised) {
     return (
       <main
-        style={{
+        style={{ marginLeft: "auto", 
           minHeight: "100vh",
           display: "flex",
           justifyContent: "center",
@@ -427,7 +427,7 @@ export default function Home() {
         }}
       >
         <div
-          style={{
+          style={{ marginLeft: "auto", 
             width: "100%",
             maxWidth: 420,
             borderRadius: isMobile ? 20 : 24,
@@ -441,7 +441,7 @@ export default function Home() {
           }}
         >
           <div
-            style={{
+            style={{ marginLeft: "auto", 
               height: 2,
               borderRadius: 2,
               background: "linear-gradient(90deg, #b91c1c, #ef4444)",
@@ -449,7 +449,7 @@ export default function Home() {
             }}
           />
           <h1
-            style={{
+            style={{ marginLeft: "auto", 
               fontSize: isMobile ? 22 : 24,
               fontWeight: 700,
               letterSpacing: -0.5,
@@ -460,7 +460,7 @@ export default function Home() {
             BidlineBuddy
           </h1>
           <p
-            style={{
+            style={{ marginLeft: "auto", 
               fontSize: 12,
               color: "#9ca3af",
               marginBottom: 14
@@ -471,7 +471,7 @@ export default function Home() {
           </p>
 
           <label
-            style={{
+            style={{ marginLeft: "auto", 
               display: "block",
               fontSize: 12,
               color: "#d1d5db",
@@ -486,7 +486,7 @@ export default function Home() {
             onChange={(e) => setCodeInput(e.target.value)}
             onKeyDown={handleCodeKeyDown}
             placeholder="Enter the code you were given"
-            style={{
+            style={{ marginLeft: "auto", 
               width: "100%",
               borderRadius: 999,
               border: "1px solid rgba(148,163,184,0.7)",
@@ -502,7 +502,7 @@ export default function Home() {
 
           {codeError && (
             <div
-              style={{
+              style={{ marginLeft: "auto", 
                 fontSize: 12,
                 color: "#fecaca",
                 marginBottom: 10
@@ -515,7 +515,7 @@ export default function Home() {
           <button
             type="button"
             onClick={handleCodeSubmit}
-            style={{
+            style={{ marginLeft: "auto", 
               width: "100%",
               borderRadius: 999,
               padding: "9px 18px",
@@ -533,7 +533,7 @@ export default function Home() {
           </button>
 
           <p
-            style={{
+            style={{ marginLeft: "auto", 
               fontSize: 11,
               color: "#9ca3af",
               marginTop: 4
@@ -549,7 +549,7 @@ export default function Home() {
 
   return (
     <main
-      style={{
+      style={{ marginLeft: "auto", 
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -562,7 +562,7 @@ export default function Home() {
       }}
     >
       <div
-        style={{
+        style={{ marginLeft: "auto", 
           width: "100%",
           maxWidth: 900,
           display: "flex",
@@ -580,7 +580,7 @@ export default function Home() {
       >
         {/* BA red accent bar */}
         <div
-          style={{
+          style={{ marginLeft: "auto", 
             height: 2,
             borderRadius: 2,
             background: "linear-gradient(90deg, #b91c1c, #ef4444)",
@@ -589,9 +589,9 @@ export default function Home() {
         />
 
         {/* Header */}
-        <header style={{ marginBottom: isMobile ? 10 : 14 }}>
+        <header style={{ marginLeft: "auto",  marginBottom: isMobile ? 10 : 14 }}>
           <div
-            style={{
+            style={{ marginLeft: "auto", 
               display: "flex",
               justifyContent: "space-between",
               gap: 12,
@@ -601,7 +601,7 @@ export default function Home() {
           >
             <div>
               <div
-                style={{
+                style={{ marginLeft: "auto", 
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
@@ -610,7 +610,7 @@ export default function Home() {
               >
                 {/* Simple "logo" mark */}
                 <div
-                  style={{
+                  style={{ marginLeft: "auto", 
                     width: 20,
                     height: 20,
                     borderRadius: 999,
@@ -628,7 +628,7 @@ export default function Home() {
                   BB
                 </div>
                 <h1
-                  style={{
+                  style={{ marginLeft: "auto", 
                     fontSize: isMobile ? 20 : 22,
                     fontWeight: 700,
                     letterSpacing: -0.4,
@@ -640,7 +640,7 @@ export default function Home() {
                 </h1>
               </div>
               <p
-                style={{
+                style={{ marginLeft: "auto", 
                   color: "#9ca3af",
                   fontSize: 12,
                   maxWidth: 640,
@@ -654,7 +654,7 @@ export default function Home() {
               </p>
             </div>
             <div
-              style={{
+              style={{ marginLeft: "auto", 
                 display: "flex",
                 flexDirection: "column",
                 alignItems: isMobile ? "flex-start" : "flex-end",
@@ -662,7 +662,7 @@ export default function Home() {
               }}
             >
               <div
-                style={{
+                style={{ marginLeft: "auto", 
                   fontSize: 11,
                   textTransform: "uppercase",
                   letterSpacing: 1,
@@ -678,7 +678,7 @@ export default function Home() {
                 Private beta · v0.3
               </div>
               <div
-                style={{
+                style={{ marginLeft: "auto", 
                   fontSize: 11,
                   color: "#9ca3af"
                 }}
@@ -690,9 +690,9 @@ export default function Home() {
         </header>
 
         {/* Example questions */}
-        <section style={{ marginBottom: 12 }}>
+        <section style={{ marginLeft: "auto",  marginBottom: 12 }}>
           <p
-            style={{
+            style={{ marginLeft: "auto", 
               fontSize: 12,
               fontWeight: 500,
               color: "#9ca3af",
@@ -702,7 +702,7 @@ export default function Home() {
             Quick questions pilots often ask:
           </p>
           <div
-            style={{
+            style={{ marginLeft: "auto", 
               display: "flex",
               flexWrap: "wrap",
               gap: 8
@@ -713,7 +713,7 @@ export default function Home() {
                 key={q}
                 type="button"
                 onClick={() => handleExampleClick(q)}
-                style={{
+                style={{ marginLeft: "auto", 
                   borderRadius: 999,
                   border: "1px solid rgba(148, 163, 184, 0.4)",
                   padding: "6px 10px",
@@ -732,7 +732,7 @@ export default function Home() {
 
         {/* Conversation area */}
         <section
-          style={{
+          style={{ marginLeft: "auto", 
             flex: 1,
             minHeight: isMobile ? 240 : 220,
             maxHeight: isMobile ? "none" : "55vh",
@@ -747,7 +747,7 @@ export default function Home() {
         >
           {history.length === 0 && (
             <div
-              style={{
+              style={{ marginLeft: "auto", 
                 height: "100%",
                 display: "flex",
                 alignItems: "center",
@@ -772,17 +772,17 @@ export default function Home() {
             const parsed = parseAnswer(item.answer);
 
             return (
-              <div key={item.id} style={{ marginBottom: 14 }}>
+              <div key={item.id} style={{ marginLeft: "auto",  marginBottom: 14 }}>
                 {/* Pilot question bubble */}
                 <div
-                  style={{
+                  style={{ marginLeft: "auto", 
                     display: "flex",
                     justifyContent: "flex-end",
                     marginBottom: 4
                   }}
                 >
                   <div
-                    style={{
+                    style={{ marginLeft: "auto", 
                       maxWidth: "85%",
                       borderRadius: 16,
                       padding: "8px 12px",
@@ -800,13 +800,13 @@ export default function Home() {
 
                 {/* BidlineBuddy answer bubble */}
                 <div
-                  style={{
+                  style={{ marginLeft: "auto", 
                     display: "flex",
                     justifyContent: "flex-start"
                   }}
                 >
                   <div
-                    style={{
+                    style={{ marginLeft: "auto", 
                       maxWidth: "100%",
                       borderRadius: 16,
                       padding: "9px 11px",
@@ -821,7 +821,7 @@ export default function Home() {
                     }}
                   >
                     <div
-                      style={{
+                      style={{ marginLeft: "auto", 
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
@@ -829,7 +829,7 @@ export default function Home() {
                       }}
                     >
                       <div
-                        style={{
+                        style={{ marginLeft: "auto", 
                           fontSize: 11,
                           textTransform: "uppercase",
                           letterSpacing: 0.08,
@@ -840,7 +840,7 @@ export default function Home() {
                         BidlineBuddy
                       </div>
                       <span
-                        style={{
+                        style={{ marginLeft: "auto", 
                           fontSize: 11,
                           padding: "2px 8px",
                           borderRadius: 999,
@@ -855,7 +855,7 @@ export default function Home() {
 
                     {/* Quick summary (TL;DR) */}
                     <div
-                      style={{
+                      style={{ marginLeft: "auto", 
                         marginBottom: 6,
                         padding: "6px 8px",
                         borderRadius: 10,
@@ -864,7 +864,7 @@ export default function Home() {
                       }}
                     >
                       <div
-                        style={{
+                        style={{ marginLeft: "auto", 
                           fontSize: 11,
                           textTransform: "uppercase",
                           letterSpacing: 0.08,
@@ -876,7 +876,7 @@ export default function Home() {
                         Quick summary
                       </div>
                       <div
-                        style={{
+                        style={{ marginLeft: "auto", 
                           fontSize: 13,
                           color: "#e5e7eb"
                         }}
@@ -888,12 +888,12 @@ export default function Home() {
                     {/* Rule detail – collapsible */}
                     {parsed.rules.length > 0 && (
                       <details
-                        style={{
+                        style={{ marginLeft: "auto", 
                           marginBottom: 4
                         }}
                       >
                         <summary
-                          style={{
+                          style={{ marginLeft: "auto", 
                             fontSize: 12,
                             color: "#9ca3af",
                             cursor: "pointer",
@@ -904,7 +904,7 @@ export default function Home() {
                           }}
                         >
                           <span
-                            style={{
+                            style={{ marginLeft: "auto", 
                               fontSize: 10,
                               borderRadius: 999,
                               border: "1px solid rgba(148,163,184,0.7)",
@@ -917,7 +917,7 @@ export default function Home() {
                           <span>View rules that apply</span>
                         </summary>
                         <ul
-                          style={{
+                          style={{ marginLeft: "auto", 
                             paddingLeft: 16,
                             marginTop: 6,
                             listStyle: "disc",
@@ -935,12 +935,12 @@ export default function Home() {
                     {/* Grey area – collapsible */}
                     {parsed.gaps.length > 0 && (
                       <details
-                        style={{
+                        style={{ marginLeft: "auto", 
                           marginBottom: 6
                         }}
                       >
                         <summary
-                          style={{
+                          style={{ marginLeft: "auto", 
                             fontSize: 12,
                             color: "#facc15",
                             cursor: "pointer",
@@ -951,7 +951,7 @@ export default function Home() {
                           }}
                         >
                           <span
-                            style={{
+                            style={{ marginLeft: "auto", 
                               fontSize: 10,
                               borderRadius: 999,
                               border: "1px solid rgba(250,204,21,0.8)",
@@ -964,7 +964,7 @@ export default function Home() {
                           <span>View what isn&apos;t covered</span>
                         </summary>
                         <ul
-                          style={{
+                          style={{ marginLeft: "auto", 
                             paddingLeft: 16,
                             marginTop: 6,
                             listStyle: "disc",
@@ -981,9 +981,9 @@ export default function Home() {
 
                     {/* Operational considerations */}
                     {parsed.pragmatic.length > 0 && (
-                      <div style={{ marginBottom: 6 }}>
+                      <div style={{ marginLeft: "auto",  marginBottom: 6 }}>
                         <div
-                          style={{
+                          style={{ marginLeft: "auto", 
                             fontSize: 11,
                             textTransform: "uppercase",
                             letterSpacing: 0.08,
@@ -995,7 +995,7 @@ export default function Home() {
                           Operational considerations (not official advice)
                         </div>
                         <ul
-                          style={{
+                          style={{ marginLeft: "auto", 
                             paddingLeft: 16,
                             margin: 0,
                             listStyle: "disc",
@@ -1012,7 +1012,7 @@ export default function Home() {
 
                     {/* Confidence detail */}
                     <div
-                      style={{
+                      style={{ marginLeft: "auto", 
                         marginTop: 5,
                         fontSize: 11,
                         color: "#9ca3af"
@@ -1024,13 +1024,13 @@ export default function Home() {
                     {/* Compact sources */}
                     {item.sources && item.sources.length > 0 && (
                       <div
-                        style={{
+                        style={{ marginLeft: "auto", 
                           marginTop: 6,
                           fontSize: 11,
                           color: "#9ca3af"
                         }}
                       >
-                        <span style={{ fontWeight: 600 }}>Sources:&nbsp;</span>
+                        <span style={{ marginLeft: "auto",  fontWeight: 600 }}>Sources:&nbsp;</span>
                         {(() => {
                           const labels = item.sources.map((s) => {
                             const parts: string[] = [];
@@ -1045,7 +1045,7 @@ export default function Home() {
                             .map((l, idx) => (
                               <span
                                 key={idx}
-                                style={{
+                                style={{ marginLeft: "auto", 
                                   display: "inline-block",
                                   borderRadius: 999,
                                   border:
@@ -1064,7 +1064,7 @@ export default function Home() {
 
                     {/* Follow-up suggestions */}
                     <div
-                      style={{
+                      style={{ marginLeft: "auto", 
                         marginTop: 8,
                         display: "flex",
                         flexWrap: "wrap",
@@ -1076,7 +1076,7 @@ export default function Home() {
                           key={f}
                           type="button"
                           onClick={() => handleFollowupClick(f)}
-                          style={{
+                          style={{ marginLeft: "auto", 
                             borderRadius: 999,
                             border: "1px solid rgba(148, 163, 184, 0.6)",
                             padding: "4px 9px",
@@ -1090,14 +1090,14 @@ export default function Home() {
                           }}
                         >
                           <span>{f}</span>
-                          <span style={{ fontSize: 10 }}>↗</span>
+                          <span style={{ marginLeft: "auto",  fontSize: 10 }}>↗</span>
                         </button>
                       ))}
                     </div>
 
                     {/* Copy + feedback row */}
                     <div
-                      style={{
+                      style={{ marginLeft: "auto", 
                         marginTop: 8,
                         display: "flex",
                         justifyContent: "space-between",
@@ -1109,7 +1109,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => copyText(item.answer)}
-                        style={{
+                        style={{ marginLeft: "auto", 
                           borderRadius: 999,
                           border: "1px solid rgba(148, 163, 184, 0.6)",
                           padding: "4px 10px",
@@ -1123,7 +1123,7 @@ export default function Home() {
                       </button>
 
                       <div
-                        style={{
+                        style={{ marginLeft: "auto", 
                           display: "flex",
                           alignItems: "center",
                           gap: 6,
@@ -1137,7 +1137,7 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() => handleFeedback(item.id, "yes")}
-                              style={{
+                              style={{ marginLeft: "auto", 
                                 borderRadius: 999,
                                 border: "1px solid rgba(34,197,94,0.6)",
                                 padding: "3px 8px",
@@ -1152,7 +1152,7 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() => handleFeedback(item.id, "no")}
-                              style={{
+                              style={{ marginLeft: "auto", 
                                 borderRadius: 999,
                                 border: "1px solid rgba(248,113,113,0.6)",
                                 padding: "3px 8px",
@@ -1166,7 +1166,7 @@ export default function Home() {
                             </button>
                           </>
                         ) : (
-                          <span style={{ color: "#a3e635" }}>
+                          <span style={{ marginLeft: "auto",  color: "#a3e635" }}>
                             Thanks for the feedback.
                           </span>
                         )}
@@ -1180,7 +1180,7 @@ export default function Home() {
 
           {loading && (
             <div
-              style={{
+              style={{ marginLeft: "auto", 
                 marginTop: 4,
                 fontSize: 12,
                 color: "#9ca3af",
@@ -1191,13 +1191,13 @@ export default function Home() {
             >
               <span>BidlineBuddy is thinking</span>
               <span
-                style={{
+                style={{ marginLeft: "auto", 
                   display: "inline-flex",
                   gap: 3
                 }}
               >
                 <span
-                  style={{
+                  style={{ marginLeft: "auto", 
                     width: 4,
                     height: 4,
                     borderRadius: 999,
@@ -1206,7 +1206,7 @@ export default function Home() {
                   }}
                 />
                 <span
-                  style={{
+                  style={{ marginLeft: "auto", 
                     width: 4,
                     height: 4,
                     borderRadius: 999,
@@ -1215,7 +1215,7 @@ export default function Home() {
                   }}
                 />
                 <span
-                  style={{
+                  style={{ marginLeft: "auto", 
                     width: 4,
                     height: 4,
                     borderRadius: 999,
@@ -1231,7 +1231,7 @@ export default function Home() {
         {/* Error message */}
         {error && (
           <div
-            style={{
+            style={{ marginLeft: "auto", 
               marginBottom: 8,
               fontSize: 13,
               color: "#fecaca",
@@ -1248,7 +1248,7 @@ export default function Home() {
         {/* Input area */}
         <section>
           <div
-            style={{
+            style={{ marginLeft: "auto", 
               display: "flex",
               flexDirection: "column",
               gap: 8
@@ -1264,7 +1264,7 @@ export default function Home() {
                   ? "Working on your last question…"
                   : "Ask about TASS, reserve, disruption, open time, ownership, etc. Press Enter to send, Shift+Enter for a new line."
               }
-              style={{
+              style={{ marginLeft: "auto", 
                 width: "100%",
                 resize: "none",
                 borderRadius: 14,
@@ -1280,7 +1280,7 @@ export default function Home() {
             />
 
             <div
-              style={{
+              style={{ marginLeft: "auto", 
                 display: "flex",
                 gap: 8,
                 alignItems: "center",
@@ -1292,7 +1292,7 @@ export default function Home() {
                 type="button"
                 onClick={() => ask()}
                 disabled={loading || !question.trim()}
-                style={{
+                style={{ marginLeft: "auto", 
                   borderRadius: 999,
                   padding: isMobile ? "8px 14px" : "7px 16px",
                   border: "none",
@@ -1319,7 +1319,7 @@ export default function Home() {
 
       {/* Footer disclaimer bar */}
       <div
-        style={{
+        style={{ marginLeft: "auto", 
           marginTop: 10,
           fontSize: 11,
           color: "#9ca3af",
@@ -1327,11 +1327,14 @@ export default function Home() {
           maxWidth: 900
         }}
       >
-        BidlineBuddy is an unofficial tool created by a BA pilot. It does not replace BLR / BASC, the FOM or advice from BASC, Scheduling or your manager.<br /> BidlineBuddy summarises BLR Feb 2025 and BASC 2022. Always confirm anything unusual or career-critical with BASC / Scheduling.
+        BidlineBuddy is an unofficial tool created by a BA pilot. It does not replace BLR / BASC, the FOM or advice from BASC, Scheduling or your manager.<br /> 
       </div>
     </main>
   );
 }
+
+
+
 
 
 
