@@ -159,7 +159,6 @@ type ParsedAnswer = {
   rules: string[];
   gaps: string[];
   pragmatic: string[];
-  script: string;
 };
 
 function parseAnswer(answer: string): ParsedAnswer {
@@ -168,12 +167,10 @@ function parseAnswer(answer: string): ParsedAnswer {
     tldr: "",
     rules: [],
     gaps: [],
-    pragmatic: [],
-    script: ""
+    pragmatic: []
   };
 
-  let section: "none" | "tldr" | "rules" | "gaps" | "pragmatic" | "script" =
-    "none";
+  let section: "none" | "tldr" | "rules" | "gaps" | "pragmatic" = "none";
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -203,10 +200,6 @@ function parseAnswer(answer: string): ParsedAnswer {
         .startsWith("4) pragmatic view (not official advice")
     ) {
       section = "pragmatic";
-      continue;
-    }
-    if (line.toLowerCase().startsWith("what to say to global ops")) {
-      section = "script";
       continue;
     }
 
@@ -243,10 +236,6 @@ function parseAnswer(answer: string): ParsedAnswer {
         }
         break;
       }
-      case "script": {
-        result.script = result.script ? `${result.script} ${line}` : line;
-        break;
-      }
       default:
         break;
     }
@@ -254,9 +243,6 @@ function parseAnswer(answer: string): ParsedAnswer {
 
   if (!result.tldr) {
     result.tldr = answer.split(/\r?\n/)[0] || "";
-  }
-  if (!result.script) {
-    result.script = answer;
   }
 
   return result;
@@ -409,7 +395,7 @@ export default function Home() {
     setQuestion(q);
   };
 
-  const copyScript = (text: string) => {
+  const copyText = (text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
   };
 
@@ -1023,39 +1009,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Suggested wording */}
-                    <div
-                      style={{
-                        marginTop: 2,
-                        padding: "6px 8px",
-                        borderRadius: 10,
-                        backgroundColor: "rgba(15,23,42,0.9)",
-                        border: "1px solid rgba(148,163,184,0.7)"
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 11,
-                          textTransform: "uppercase",
-                          letterSpacing: 0.08,
-                          color: "#9ca3af",
-                          marginBottom: 2,
-                          fontWeight: 600
-                        }}
-                      >
-                        Suggested wording (for clarification)
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          color: "#e5e7eb",
-                          whiteSpace: "pre-wrap"
-                        }}
-                      >
-                        {parsed.script}
-                      </div>
-                    </div>
-
                     {/* Confidence detail */}
                     <div
                       style={{
@@ -1154,7 +1107,7 @@ export default function Home() {
                     >
                       <button
                         type="button"
-                        onClick={() => copyScript(parsed.script)}
+                        onClick={() => copyText(item.answer)}
                         style={{
                           borderRadius: 999,
                           border: "1px solid rgba(148, 163, 184, 0.6)",
@@ -1165,7 +1118,7 @@ export default function Home() {
                           color: "#e5e7eb"
                         }}
                       >
-                        Copy suggested wording
+                        Copy answer
                       </button>
 
                       <div

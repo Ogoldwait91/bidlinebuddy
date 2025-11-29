@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing query" }, { status: 400 });
     }
 
-    // Build a short conversational history (last 3 Q&A pairs)
+    // Short conversational history (last 3 Q&A pairs)
     let historyText = "";
     if (history.length > 0) {
       const recent = history.slice(-3);
@@ -44,10 +44,11 @@ export async function POST(req: NextRequest) {
     });
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
+    // Tighten the search: higher threshold, slightly fewer chunks
     const { data: chunks, error } = await supabase.rpc("match_blr_chunks", {
       query_embedding: queryEmbedding,
-      match_threshold: 0.4,
-      match_count: 12
+      match_threshold: 0.55,
+      match_count: 10
     });
 
     if (error) {
@@ -63,10 +64,11 @@ export async function POST(req: NextRequest) {
       chunks?.length ?? 0
     );
 
+    // If nothing comes back at all
     if (!chunks || chunks.length === 0) {
       const fallbackAnswer = [
         "1) TL;DR:",
-        "- Unclear from BLR / BASC.",
+        "- The extracts I have do not clearly cover this scenario.",
         "",
         "2) What the rules say:",
         "- I couldn't find any clearly relevant rules in the indexed Bidline Rules / BASC extracts.",
@@ -74,11 +76,8 @@ export async function POST(req: NextRequest) {
         "3) What the rules don’t say / grey area:",
         "- The documents I have do not directly cover this scenario, so I cannot safely infer an answer.",
         "",
-        "4) Pragmatic view (not official advice):",
+        "4) Operational steer (not official advice):",
         "- For anything borderline or career-critical, the safest course is to speak directly with BASC or Scheduling and follow their written guidance.",
-        "",
-        "What to say to Global Ops:",
-        '"BidlineBuddy could not find a clear rule covering this situation in BLR / BASC. I would like to check with you or BASC for the official position, please."',
         "",
         "Confidence tag: Low"
       ].join("\n");
@@ -86,6 +85,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         answer: fallbackAnswer.replace(/Confidence tag:.*$/i, "").trim(),
         chunks: [],
+        confidenceTag: "low"
+      });
+    }
+
+    // Compute max similarity – if even the best match is weak, treat as "not clearly covered"
+    const sims = chunks
+      .map((c: any) =>
+        typeof c.similarity === "number" ? c.similarity : null
+      )
+      .filter((v: number | null): v is number => v !== null);
+
+    const maxSim = sims.length > 0 ? Math.max(...sims) : 0;
+
+    if (maxSim < 0.6) {
+      console.log(
+        "BidlineBuddy: max similarity too low, returning conservative fallback. maxSim=",
+        maxSim
+      );
+
+      const fallbackAnswer = [
+        "1) TL;DR:",
+        "- The closest matches in BLR / BASC do not clearly cover this exact scenario.",
+        "",
+        "2) What the rules say:",
+        "- The sections I can find are only loosely related to your question, so I cannot safely treat them as definitive for this case.",
+        "",
+        "3) What the rules don’t say / grey area:",
+        "- There appears to be a gap between your scenario and the extracts I have.",
+        "- Interpreting other rule types (e.g. hotel report vs home standby, or short-haul vs long-haul) as if they applied here would be speculative.",
+        "",
+        "4) Operational steer (not official advice):",
+        "- Treat this as a grey area and speak to BASC or Scheduling before relying on any interpretation.",
+        "- Ask them to confirm the correct application of BLR / BASC for your specific duty pattern.",
+        "",
+        "Confidence tag: Low"
+      ].join("\n");
+
+      return NextResponse.json({
+        answer: fallbackAnswer.replace(/Confidence tag:.*$/i, "").trim(),
+        chunks,
         confidenceTag: "low"
       });
     }
@@ -125,20 +164,21 @@ Hard safety rules:
 - You MUST base every answer ONLY on the provided context chunks, which are labelled [1], [2], etc.
 - If the context does NOT clearly answer the question, you MUST say this explicitly rather than guessing.
 - NEVER invent BLR / BASC rules, numbers, definitions, or pages that are not shown in the context.
+- When you reference specific rules, you MUST refer back to the chunk labels and pages, e.g. "From [1], BLR Feb 2025 p.104: …".
 - If different chunks appear to conflict or be ambiguous, you MUST say that and advise contacting BASC.
-- If a chunk is clearly about a different duty type or scenario (e.g. hotel report vs home standby, airport report vs home standby, long-haul vs short-haul, reserve vs open time), you MUST NOT directly apply that rule to the question. Instead, you should say that the section appears to be about a different context and treat it as not answering the question.
+- If a chunk is clearly about a different duty type or scenario (e.g. hotel report vs home standby, airport report vs home standby, long-haul vs short-haul, reserve vs open time), you MUST NOT directly apply that rule to the question. Instead, say that the section appears to be about a different context and treat it as not answering the question.
 - When the pilot's question clearly mentions a specific context (e.g. "home standby", "RPH", "hotel report", "airport report"), you should prefer chunks that explicitly mention that same context and down-weight or ignore chunks that clearly refer to something else.
 - Always prefer chunks where the wording closely matches the key terms in the pilot's question (e.g. "home standby", "RPH", "open time", "disruption") over more generic or different-scenario chunks.
 - If the question is clearly outside the scope of BLR / BASC (e.g. medical, HR disputes, pay scales), say it is outside scope and advise the right channel.
 
-When you reference specific rules, refer back to the chunk labels [1], [2], etc, and any pages that appear in the context, e.g. "From [1], BLR Feb 2025 p.104: …" or "From [3], BASC 2022 p.17: …".
+You are NOT a script generator. Do NOT provide word-for-word phrases for pilots to say to Global Ops or anyone else. You are a specialist search-and-explain tool for BLR / BASC.
 
 Format every response exactly as:
 
 1) TL;DR:
 - One sentence.
 - Be as specific and helpful as the rules allow (e.g. "Usually yes, if …", "No, unless …", "Yes, but only when …").
-- Only use the wording "Unclear from BLR / BASC" when the provided extracts genuinely do NOT cover the scenario or are clearly ambiguous.
+- Only use the wording "The extracts I have do not clearly cover this scenario" when the provided extracts genuinely do NOT cover the scenario or are clearly ambiguous.
 
 2) What the rules say:
 - 3–6 bullet points.
@@ -150,16 +190,11 @@ Format every response exactly as:
 - Highlight any gaps, ambiguity, or places where the docs are silent.
 - If something feels like a judgement call, say that clearly.
 
-4) Pragmatic view (not official advice):
+4) Operational steer (not official advice):
 - 2–4 bullet points in plain English, suggesting a sensible, conservative approach a professional pilot might take.
 - Make it clear this is NOT official advice and should be checked with BASC / Scheduling for anything high-stakes.
 
-Finally, append:
-
-What to say to Global Ops:
-- A short, polite script the pilot can read out word-for-word.
-- Base it on the rules you have just explained.
-- If the answer is unclear, the script should ask Global Ops / BASC for their official view rather than asserting a right.
+Do NOT include a separate "What to say to Global Ops" or any suggested wording for what a pilot should say. You only explain what the rules say, do not say, and the operational considerations.
 
 At the very end of your message, after everything else, add a single line in this exact format (for the UI only):
 Confidence tag: High
