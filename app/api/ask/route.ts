@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     // Tighten the search: higher threshold, slightly fewer chunks
     const { data: chunks, error } = await supabase.rpc("match_blr_chunks", {
       query_embedding: queryEmbedding,
-      match_threshold: isFdpQuestion ? 0.45 : 0.55,
+      match_threshold: isRelaxedQuestion ? 0.45 : 0.55,
       match_count: 10
     });
 
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     const maxSim = sims.length > 0 ? Math.max(...sims) : 0;
 
-    const effectiveMaxSimThreshold = isFdpQuestion ? 0.5 : 0.6;
+    const effectiveMaxSimThreshold = isRelaxedQuestion ? 0.5 : 0.6;
     if (maxSim < effectiveMaxSimThreshold) {
       console.log(
         "BidlineBuddy: max similarity too low, returning conservative fallback. maxSim=",
