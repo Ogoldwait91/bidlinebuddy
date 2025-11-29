@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
 
     const { data: chunks, error } = await supabase.rpc("match_blr_chunks", {
       query_embedding: queryEmbedding,
-      match_threshold: 0.7,
-      match_count: 6
+      match_threshold: 0.4, // 👈 loosened from 0.7
+      match_count: 12       // 👈 pull more chunks
     });
 
     if (error) {
@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    console.log("BidlineBuddy: retrieved chunks count =", chunks?.length ?? 0);
 
     if (!chunks || chunks.length === 0) {
       const fallbackAnswer = [
