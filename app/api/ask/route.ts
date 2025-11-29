@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
 
     const { data: chunks, error } = await supabase.rpc("match_blr_chunks", {
       query_embedding: queryEmbedding,
-      match_threshold: 0.4, // 👈 loosened from 0.7
-      match_count: 12       // 👈 pull more chunks
+      match_threshold: 0.4,
+      match_count: 12
     });
 
     if (error) {
@@ -41,7 +41,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("BidlineBuddy: retrieved chunks count =", chunks?.length ?? 0);
+    console.log(
+      "BidlineBuddy: retrieved chunks count =",
+      chunks?.length ?? 0
+    );
 
     if (!chunks || chunks.length === 0) {
       const fallbackAnswer = [
@@ -107,8 +110,8 @@ Format every response exactly as:
 
 1) TL;DR:
 - One sentence.
-- Use "Yes", "No", or "Unclear from BLR / BASC" where possible.
-- If you are not confident, choose "Unclear from BLR / BASC".
+- Be as specific and helpful as the rules allow (e.g. "Usually yes, if…", "No, unless…", "Yes, but only when…").
+- Only use the wording "Unclear from BLR / BASC" when the provided extracts genuinely do NOT cover the scenario or are clearly ambiguous.
 
 2) What the rules say:
 - 3–6 bullet points.
