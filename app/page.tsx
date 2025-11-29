@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type SourceChunk = {
   source?: string;
@@ -17,12 +17,16 @@ type QAPair = {
   feedback?: "yes" | "no" | null;
 };
 
+const ACCESS_CODE = "BIDLINE2025"; // 👈 change this to whatever you like
+const ACCESS_STORAGE_KEY = "bidlinebuddy_access_v1";
+
 function getConfidence(sources: SourceChunk[]) {
   if (!sources || sources.length === 0) {
     return {
       label: "Unknown",
       color: "#94a3b8",
-      detail: "No strong matches were found in the indexed rules. Treat this as a steer only and check with BASC."
+      detail:
+        "No strong matches were found in the indexed rules. Treat this as a steer only and check with BASC."
     };
   }
 
@@ -34,7 +38,8 @@ function getConfidence(sources: SourceChunk[]) {
     return {
       label: "Unknown",
       color: "#94a3b8",
-      detail: "Similarity scores are not available for these matches. Treat this as a steer only and check with BASC."
+      detail:
+        "Similarity scores are not available for these matches. Treat this as a steer only and check with BASC."
     };
   }
 
@@ -91,7 +96,11 @@ function getFollowups(question: string): string[] {
     ];
   }
 
-  if (q.includes("ownership") || q.includes("owned trip") || q.includes("trip buying")) {
+  if (
+    q.includes("ownership") ||
+    q.includes("owned trip") ||
+    q.includes("trip buying")
+  ) {
     return [
       "When do I lose trip ownership?",
       "How does trip buying interact with disruption?",
@@ -132,7 +141,8 @@ function parseAnswer(answer: string): ParsedAnswer {
     script: ""
   };
 
-  let section: "none" | "tldr" | "rules" | "gaps" | "pragmatic" | "script" = "none";
+  let section: "none" | "tldr" | "rules" | "gaps" | "pragmatic" | "script" =
+    "none";
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -219,6 +229,10 @@ function parseAnswer(answer: string): ParsedAnswer {
 }
 
 export default function Home() {
+  const [authorised, setAuthorised] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
+
   const [question, setQuestion] = useState("");
   const [history, setHistory] = useState<QAPair[]>([]);
   const [loading, setLoading] = useState(false);
@@ -230,6 +244,38 @@ export default function Home() {
     "Do I keep trip ownership if I am taken for disruption?",
     "Can open time be used to replace my standby?"
   ];
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(ACCESS_STORAGE_KEY);
+    if (stored === "granted") {
+      setAuthorised(true);
+    }
+  }, []);
+
+  const handleCodeSubmit = () => {
+    const trimmed = codeInput.trim();
+    if (!trimmed) {
+      setCodeError("Please enter your access code.");
+      return;
+    }
+    if (trimmed === ACCESS_CODE) {
+      setAuthorised(true);
+      setCodeError(null);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(ACCESS_STORAGE_KEY, "granted");
+      }
+    } else {
+      setCodeError("That code is not recognised.");
+    }
+  };
+
+  const handleCodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleCodeSubmit();
+    }
+  };
 
   const ask = async () => {
     if (!question.trim() || loading) return;
@@ -308,6 +354,143 @@ export default function Home() {
     );
   };
 
+  // ⛔ Access gate (shown until code is accepted)
+  if (!authorised) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "24px",
+          background:
+            "radial-gradient(circle at top, #011b3a 0, #001326 35%, #020617 100%)",
+          fontFamily:
+            "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 420,
+            borderRadius: 28,
+            padding: 24,
+            boxShadow:
+              "0 20px 45px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.35)",
+            background:
+              "linear-gradient(135deg, #020617 0%, #020617 32%, #0b1220 100%)",
+            color: "#e5e7eb"
+          }}
+        >
+          <div
+            style={{
+              height: 3,
+              borderRadius: 999,
+              background: "linear-gradient(90deg, #b91c1c, #ef4444)",
+              marginBottom: 16
+            }}
+          />
+          <h1
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              letterSpacing: -0.5,
+              marginBottom: 4,
+              color: "#f9fafb"
+            }}
+          >
+            BidlineBuddy
+          </h1>
+          <p
+            style={{
+              fontSize: 13,
+              color: "#9ca3af",
+              marginBottom: 16
+            }}
+          >
+            Private beta for BA pilots. Enter your access code to use
+            BidlineBuddy.
+          </p>
+
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              color: "#d1d5db",
+              marginBottom: 6
+            }}
+          >
+            Access code
+          </label>
+          <input
+            type="password"
+            value={codeInput}
+            onChange={(e) => setCodeInput(e.target.value)}
+            onKeyDown={handleCodeKeyDown}
+            placeholder="Enter the code you were given"
+            style={{
+              width: "100%",
+              borderRadius: 999,
+              border: "1px solid rgba(148,163,184,0.7)",
+              padding: "8px 12px",
+              fontSize: 14,
+              boxSizing: "border-box",
+              outline: "none",
+              backgroundColor: "rgba(15,23,42,0.95)",
+              color: "#e5e7eb",
+              marginBottom: 10
+            }}
+          />
+
+          {codeError && (
+            <div
+              style={{
+                fontSize: 12,
+                color: "#fecaca",
+                marginBottom: 10
+              }}
+            >
+              {codeError}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleCodeSubmit}
+            style={{
+              width: "100%",
+              borderRadius: 999,
+              padding: "8px 18px",
+              border: "none",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #b91c1c, #1d4ed8)",
+              color: "#f9fafb",
+              boxShadow: "0 10px 24px rgba(37, 99, 235, 0.6)",
+              marginBottom: 8
+            }}
+          >
+            Unlock BidlineBuddy
+          </button>
+
+          <p
+            style={{
+              fontSize: 11,
+              color: "#9ca3af",
+              marginTop: 4
+            }}
+          >
+            If you don&apos;t have a code, please contact the person who shared
+            BidlineBuddy with you.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // ✅ Main app once authorised
   return (
     <main
       style={{
@@ -679,9 +862,9 @@ export default function Home() {
                             color: "#e5e7eb"
                           }}
                         >
-                            {parsed.pragmatic.map((p, idx) => (
-                              <li key={idx}>{p}</li>
-                            ))}
+                          {parsed.pragmatic.map((p, idx) => (
+                            <li key={idx}>{p}</li>
+                          ))}
                         </ul>
                       </div>
                     )}
