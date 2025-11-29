@@ -15,10 +15,27 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const { query } = await req.json();
+    const body = await req.json();
+    const query = body?.query;
+    const history = Array.isArray(body?.history) ? body.history : [];
 
     if (!query || typeof query !== "string") {
       return NextResponse.json({ error: "Missing query" }, { status: 400 });
+    }
+
+    // Build a short conversational history (last 3 Q&A pairs)
+    let historyText = "";
+    if (history.length > 0) {
+      const recent = history.slice(-3);
+      historyText = recent
+        .map((h: any, idx: number) => {
+          const q =
+            typeof h.question === "string" ? h.question : "(no question text)";
+          const a =
+            typeof h.answer === "string" ? h.answer : "(no answer text)";
+          return `Previous Q${idx + 1}: ${q}\nPrevious A${idx + 1}: ${a}`;
+        })
+        .join("\n\n");
     }
 
     const embeddingResponse = await openai.embeddings.create({
@@ -61,10 +78,16 @@ export async function POST(req: NextRequest) {
         "- For anything borderline or career-critical, the safest course is to speak directly with BASC or Scheduling and follow their written guidance.",
         "",
         "What to say to Global Ops:",
-        '"BidlineBuddy could not find a clear rule covering this situation in BLR / BASC. I would like to check with you or BASC for the official position, please."'
+        '"BidlineBuddy could not find a clear rule covering this situation in BLR / BASC. I would like to check with you or BASC for the official position, please."',
+        "",
+        "Confidence tag: Low"
       ].join("\n");
 
-      return NextResponse.json({ answer: fallbackAnswer, chunks: [] });
+      return NextResponse.json({
+        answer: fallbackAnswer.replace(/Confidence tag:.*$/i, "").trim(),
+        chunks: [],
+        confidenceTag: "low"
+      });
     }
 
     const contextText = chunks
@@ -84,6 +107,10 @@ export async function POST(req: NextRequest) {
         return `${label}\n${trimmedContent}`;
       })
       .join("\n\n");
+
+    const historyPrefix = historyText
+      ? `Here is the recent conversation context between the pilot and BidlineBuddy:\n\n${historyText}\n\nTreat the following as a follow-up question that may refer back to this context.\n\n`
+      : "";
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -110,7 +137,7 @@ Format every response exactly as:
 
 1) TL;DR:
 - One sentence.
-- Be as specific and helpful as the rules allow (e.g. "Usually yes, if…", "No, unless…", "Yes, but only when…").
+- Be as specific and helpful as the rules allow (e.g. "Usually yes, if …", "No, unless …", "Yes, but only when …").
 - Only use the wording "Unclear from BLR / BASC" when the provided extracts genuinely do NOT cover the scenario or are clearly ambiguous.
 
 2) What the rules say:
@@ -134,18 +161,37 @@ What to say to Global Ops:
 - Base it on the rules you have just explained.
 - If the answer is unclear, the script should ask Global Ops / BASC for their official view rather than asserting a right.
 
-If the context does not contain enough information to confidently answer, you MUST say so clearly rather than guessing.
+At the very end of your message, after everything else, add a single line in this exact format (for the UI only):
+Confidence tag: High
+or
+Confidence tag: Medium
+or
+Confidence tag: Low
+
+Choose:
+- High if the rules clearly and directly answer the question.
+- Medium if the rules are relevant but there are caveats or mild ambiguity.
+- Low if the rules only partially match or the situation is mostly outside the provided extracts.
+
+If the context does not contain enough information to confidently answer, you MUST say so clearly rather than guessing, and your confidence should be Low.
 `
         },
         {
           role: "user",
-          content: `Here are the most relevant rule extracts from BLR / BASC:\n\n${contextText}\n\nPilot question: ${query}\n\nAnswer using ONLY these extracts. If they do not clearly answer, say so.`
+          content: `${historyPrefix}Here are the most relevant rule extracts from BLR / BASC:\n\n${contextText}\n\nCurrent pilot question: ${query}\n\nAnswer using ONLY these extracts. If they do not clearly answer, say so.`
         }
       ]
     });
 
-    const answer = completion.choices[0].message.content;
-    return NextResponse.json({ answer, chunks });
+    const raw = completion.choices[0].message.content ?? "";
+    const tagMatch = raw.match(/Confidence tag:\s*(High|Medium|Low)/i);
+    const confidenceTag = tagMatch
+      ? tagMatch[1].toLowerCase()
+      : "unknown";
+
+    const answer = raw.replace(/Confidence tag:.*$/i, "").trim();
+
+    return NextResponse.json({ answer, chunks, confidenceTag });
   } catch (err: any) {
     console.error("Unexpected error:", err);
 
