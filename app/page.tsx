@@ -1,4 +1,4 @@
-"use client";
+Ôªø"use client";
 
 import { useState, useEffect } from "react";
 
@@ -9,18 +9,51 @@ type SourceChunk = {
   similarity?: number | null;
 };
 
+type ConfidenceTag = "high" | "medium" | "low" | "unknown";
+
 type QAPair = {
   id: number;
   question: string;
   answer: string;
   sources: SourceChunk[];
   feedback?: "yes" | "no" | null;
+  confidenceTag?: ConfidenceTag;
 };
 
 const ACCESS_CODE = "BIDLINE2025"; // change this if you like
 const ACCESS_STORAGE_KEY = "bidlinebuddy_access_v1";
 
-function getConfidence(sources: SourceChunk[]) {
+function getConfidence(
+  sources: SourceChunk[],
+  tag?: ConfidenceTag
+): { label: string; color: string; detail: string } {
+  // Prefer model-provided tag if present
+  if (tag === "high") {
+    return {
+      label: "High confidence",
+      color: "#16a34a",
+      detail:
+        "BidlineBuddy believes the rules quoted clearly cover this scenario. Still confirm anything unusual with BASC."
+    };
+  }
+  if (tag === "medium") {
+    return {
+      label: "Medium confidence",
+      color: "#eab308",
+      detail:
+        "The rules appear relevant but there may be caveats or grey areas. Use this as a strong steer and confirm with BASC if in doubt."
+    };
+  }
+  if (tag === "low") {
+    return {
+      label: "Low confidence",
+      color: "#dc2626",
+      detail:
+        "The rules only partially match or are ambiguous. Treat this as a steer only and confirm with BASC / Scheduling."
+    };
+  }
+
+  // Fallback: similarity-based if no tag
   if (!sources || sources.length === 0) {
     return {
       label: "Unknown",
@@ -158,7 +191,7 @@ function parseAnswer(answer: string): ParsedAnswer {
       continue;
     }
     if (
-      line.toLowerCase().startsWith("3) what the rules donít") ||
+      line.toLowerCase().startsWith("3) what the rules don‚Äôt") ||
       line.toLowerCase().startsWith("3) what the rules don't")
     ) {
       section = "gaps";
@@ -241,10 +274,12 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
 
   const exampleQuestions = [
-    "Can they assign into my TASS if it makes my next trip clash?",
-    "What are the reserve contactability rules after a night stop?",
-    "Do I keep trip ownership if I am taken for disruption?",
-    "Can open time be used to replace my standby?"
+    "Can they assign from home standby into a trip that touches my days off?",
+    "What are the contactability rules for RPH (home standby) the day before reserve?",
+    "Do I keep trip ownership if my long-haul trip is disrupted and I am reassigned?",
+    "In what order is open time allocated and who gets priority?",
+    "How is TASS discharged and can TASS be put on my days off?",
+    "What rest must I get between a long-haul trip and the next reserve day?"
   ];
 
   useEffect(() => {
@@ -299,10 +334,19 @@ export default function Home() {
     setError(null);
 
     try {
+      // Only send compact history (question + answer) to keep tokens down
+      const compactHistory = history.map((h) => ({
+        question: h.question,
+        answer: h.answer
+      }));
+
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: currentQuestion })
+        body: JSON.stringify({
+          query: currentQuestion,
+          history: compactHistory
+        })
       });
 
       const data = await res.json();
@@ -322,6 +366,17 @@ export default function Home() {
           ? data.chunks
           : [];
 
+        const confidenceTagRaw =
+          typeof data.confidenceTag === "string"
+            ? data.confidenceTag.toLowerCase()
+            : "unknown";
+        const confidenceTag: ConfidenceTag =
+          confidenceTagRaw === "high" ||
+          confidenceTagRaw === "medium" ||
+          confidenceTagRaw === "low"
+            ? confidenceTagRaw
+            : "unknown";
+
         setHistory((prev) => [
           ...prev,
           {
@@ -329,7 +384,8 @@ export default function Home() {
             question: currentQuestion,
             answer,
             sources,
-            feedback: null
+            feedback: null,
+            confidenceTag
           }
         ]);
         setQuestion("");
@@ -368,7 +424,7 @@ export default function Home() {
     );
   };
 
-  // ? Access gate
+  // ‚õî Access gate
   if (!authorised) {
     return (
       <main
@@ -505,7 +561,7 @@ export default function Home() {
     );
   }
 
-  // ? Main app once authorised
+  // ‚úÖ Main app once authorised
   return (
     <main
       style={{
@@ -595,7 +651,7 @@ export default function Home() {
                   "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(15,23,42,0.9))"
               }}
             >
-              BLR Feb 2025 ∑ BASC 2022
+              BLR Feb 2025 ¬∑ BASC 2022
             </div>
           </div>
         </header>
@@ -675,7 +731,10 @@ export default function Home() {
           )}
 
           {history.map((item) => {
-            const confidence = getConfidence(item.sources);
+            const confidence = getConfidence(
+              item.sources,
+              item.confidenceTag
+            );
             const followups = getFollowups(item.question);
             const parsed = parseAnswer(item.answer);
 
@@ -837,7 +896,7 @@ export default function Home() {
                             fontWeight: 600
                           }}
                         >
-                          What the rules donít say / grey area
+                          What the rules don‚Äôt say / grey area
                         </div>
                         <ul
                           style={{
@@ -963,8 +1022,8 @@ export default function Home() {
                           {item.sources.map((s, idx) => (
                             <li key={idx}>
                               {s.source || "Unknown source"}
-                              {s.page ? ` ñ ${s.page}` : ""}
-                              {s.section ? ` ñ ${s.section}` : ""}
+                              {s.page ? ` ‚Äì ${s.page}` : ""}
+                              {s.section ? ` ‚Äì ${s.section}` : ""}
                             </li>
                           ))}
                         </ul>
@@ -1052,7 +1111,7 @@ export default function Home() {
                                 color: "#bbf7d0"
                               }}
                             >
-                              ?? Yes
+                              üëç Yes
                             </button>
                             <button
                               type="button"
@@ -1067,7 +1126,7 @@ export default function Home() {
                                 color: "#fecaca"
                               }}
                             >
-                              ?? Not quite
+                              üëé Not quite
                             </button>
                           </>
                         ) : (
@@ -1091,7 +1150,7 @@ export default function Home() {
                 color: "#9ca3af"
               }}
             >
-              BidlineBuddy is thinkingÖ
+              BidlineBuddy is thinking‚Ä¶
             </div>
           )}
         </section>
@@ -1129,7 +1188,7 @@ export default function Home() {
               onKeyDown={handleKeyDown}
               placeholder={
                 loading
-                  ? "Working on your last questionÖ"
+                  ? "Working on your last question‚Ä¶"
                   : "Ask BidlineBuddy anything about BLR / BASC. Press Enter to send, Shift+Enter for a new line."
               }
               style={{
@@ -1189,7 +1248,7 @@ export default function Home() {
                       : "0 10px 24px rgba(37, 99, 235, 0.6)"
                 }}
               >
-                {loading ? "ThinkingÖ" : "Ask BidlineBuddy"}
+                {loading ? "Thinking‚Ä¶" : "Ask BidlineBuddy"}
               </button>
             </div>
           </div>
