@@ -20,20 +20,19 @@ type QAPair = {
   confidenceTag?: ConfidenceTag;
 };
 
-const ACCESS_CODE = "BIDLINE2025"; // change this if you like
+const ACCESS_CODE = "BIDLINE2025";
 const ACCESS_STORAGE_KEY = "bidlinebuddy_access_v1";
 
 function getConfidence(
   sources: SourceChunk[],
   tag?: ConfidenceTag
 ): { label: string; color: string; detail: string } {
-  // Prefer model-provided tag if present
   if (tag === "high") {
     return {
       label: "Strong rule support",
       color: "#16a34a",
       detail:
-        "The quoted BLR / BASC extracts clearly support this answer. Still confirm anything unusual with BASC."
+        "BidlineBuddy believes the quoted rules clearly cover this scenario. Still confirm anything unusual with BASC."
     };
   }
   if (tag === "medium") {
@@ -41,7 +40,7 @@ function getConfidence(
       label: "Rules partly support",
       color: "#eab308",
       detail:
-        "The rules are relevant but there may be caveats or grey areas. Use this as a strong steer and confirm with BASC if in doubt."
+        "The rules look relevant but there may be caveats or grey areas. Treat this as a strong steer and confirm with BASC if in doubt."
     };
   }
   if (tag === "low") {
@@ -53,7 +52,6 @@ function getConfidence(
     };
   }
 
-  // Fallback: similarity-based if no tag
   if (!sources || sources.length === 0) {
     return {
       label: "Unknown",
@@ -198,6 +196,7 @@ function parseAnswer(answer: string): ParsedAnswer {
       continue;
     }
     if (
+      line.toLowerCase().startsWith("4) operational steer") ||
       line.toLowerCase().startsWith("4) pragmatic view") ||
       line
         .toLowerCase()
@@ -328,16 +327,15 @@ export default function Home() {
     }
   };
 
-  // Core "ask with a specific query" function – used for normal sends + chips
-  const askDirect = async (rawQuery: string) => {
-    if (!rawQuery.trim() || loading) return;
-    const currentQuestion = rawQuery.trim();
+  const ask = async (overrideQuestion?: string) => {
+    if ((!question.trim() && !overrideQuestion) || loading) return;
+    const currentQuestion = (overrideQuestion ?? question).trim();
+    if (!currentQuestion) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      // Only send compact history (question + answer) to keep tokens down
       const compactHistory = history.map((h) => ({
         question: h.question,
         answer: h.answer
@@ -400,11 +398,6 @@ export default function Home() {
     }
   };
 
-  const ask = () => {
-    if (!question.trim() || loading) return;
-    void askDirect(question);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -413,8 +406,7 @@ export default function Home() {
   };
 
   const handleExampleClick = (q: string) => {
-    // Auto-send example questions to feel conversational
-    void askDirect(q);
+    setQuestion(q);
   };
 
   const copyScript = (text: string) => {
@@ -422,8 +414,7 @@ export default function Home() {
   };
 
   const handleFollowupClick = (followup: string) => {
-    // Treat follow-up as a new turn but with conversation history
-    void askDirect(followup);
+    ask(followup);
   };
 
   const handleFeedback = (id: number, value: "yes" | "no") => {
@@ -432,46 +423,8 @@ export default function Home() {
         item.id === id ? { ...item, feedback: value } : item
       )
     );
-
-    // If "Not quite", pre-fill a follow-up prompt for the pilot to send
-    if (value === "no") {
-      const target = history.find((h) => h.id === id);
-      if (target) {
-        const followup =
-          target.question +
-          " Can you tighten this answer and focus on any edge cases or grey areas that might apply to me?";
-        setQuestion(followup);
-      }
-    }
   };
 
-  // Build compact source summary string like: "BLR Feb 2025 (p.104, p.117); BASC 2022 (p.17)"
-  function summariseSources(sources: SourceChunk[]): string {
-    if (!sources || sources.length === 0) return "No specific pages quoted.";
-
-    const map: Record<string, Set<string>> = {};
-
-    for (const s of sources) {
-      const key = s.source || "Unknown source";
-      if (!map[key]) map[key] = new Set<string>();
-      if (s.page) map[key].add(s.page);
-    }
-
-    const parts: string[] = [];
-
-    for (const [source, pagesSet] of Object.entries(map)) {
-      const pages = Array.from(pagesSet);
-      if (pages.length === 0) {
-        parts.push(source);
-      } else {
-        parts.push(`${source} (${pages.join(", ")})`);
-      }
-    }
-
-    return parts.join("; ");
-  }
-
-  // ⛔ Access gate
   if (!authorised) {
     return (
       <main
@@ -491,7 +444,7 @@ export default function Home() {
           style={{
             width: "100%",
             maxWidth: 420,
-            borderRadius: isMobile ? 20 : 28,
+            borderRadius: isMobile ? 20 : 24,
             padding: isMobile ? 18 : 24,
             boxShadow: isMobile
               ? "0 10px 25px rgba(15,23,42,0.6)"
@@ -503,8 +456,8 @@ export default function Home() {
         >
           <div
             style={{
-              height: 3,
-              borderRadius: 4,
+              height: 2,
+              borderRadius: 2,
               background: "linear-gradient(90deg, #b91c1c, #ef4444)",
               marginBottom: 16
             }}
@@ -522,13 +475,13 @@ export default function Home() {
           </h1>
           <p
             style={{
-              fontSize: 13,
+              fontSize: 12,
               color: "#9ca3af",
-              marginBottom: 16
+              marginBottom: 14
             }}
           >
-            Private beta access for BA pilots. Enter your access code to unlock
-            BLR / BASC search.
+            BA Bidline Rules &amp; BASC guidance — explained clearly with page
+            references. Private beta – access code required.
           </p>
 
           <label
@@ -608,14 +561,14 @@ export default function Home() {
     );
   }
 
-  // ✅ Main app once authorised
   return (
     <main
       style={{
         minHeight: "100vh",
         display: "flex",
-        justifyContent: "center",
-        padding: isMobile ? "12px" : "24px",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: isMobile ? "10px" : "20px",
         background:
           "radial-gradient(circle at top, #011b3a 0, #001326 35%, #020617 100%)",
         fontFamily:
@@ -628,8 +581,8 @@ export default function Home() {
           maxWidth: 900,
           display: "flex",
           flexDirection: "column",
-          borderRadius: isMobile ? 18 : 28,
-          padding: isMobile ? 16 : 24,
+          borderRadius: isMobile ? 18 : 24,
+          padding: isMobile ? 14 : 20,
           boxShadow: isMobile
             ? "0 10px 25px rgba(15,23,42,0.6)"
             : "0 20px 45px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.35)",
@@ -641,15 +594,15 @@ export default function Home() {
         {/* BA red accent bar */}
         <div
           style={{
-            height: 3,
-            borderRadius: 4,
+            height: 2,
+            borderRadius: 2,
             background: "linear-gradient(90deg, #b91c1c, #ef4444)",
-            marginBottom: 12
+            marginBottom: 10
           }}
         />
 
         {/* Header */}
-        <header style={{ marginBottom: isMobile ? 12 : 16 }}>
+        <header style={{ marginBottom: isMobile ? 10 : 14 }}>
           <div
             style={{
               display: "flex",
@@ -660,51 +613,97 @@ export default function Home() {
             }}
           >
             <div>
-              <h1
+              <div
                 style={{
-                  fontSize: isMobile ? 24 : 26,
-                  fontWeight: 700,
-                  letterSpacing: -0.5,
-                  marginBottom: 2,
-                  color: "#f9fafb"
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 2
                 }}
               >
-                BidlineBuddy
-              </h1>
+                {/* Simple "logo" mark */}
+                <div
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 999,
+                    border: "1px solid rgba(148,163,184,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "#e5e7eb",
+                    background:
+                      "linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,64,175,0.9))"
+                  }}
+                >
+                  BB
+                </div>
+                <h1
+                  style={{
+                    fontSize: isMobile ? 20 : 22,
+                    fontWeight: 700,
+                    letterSpacing: -0.4,
+                    color: "#f9fafb",
+                    margin: 0
+                  }}
+                >
+                  BidlineBuddy
+                </h1>
+              </div>
               <p
                 style={{
                   color: "#9ca3af",
-                  fontSize: 13,
-                  maxWidth: 640
+                  fontSize: 12,
+                  maxWidth: 640,
+                  margin: 0
                 }}
               >
-                BLR &amp; BASC copilot for BA pilots. Ask in plain English and
-                BidlineBuddy will quote the rules, highlight grey areas, and
-                suggest what to say to Global Ops. For anything unusual or
-                career-critical, always confirm with BASC.
+                BA Bidline Rules &amp; BASC guidance — explained clearly with
+                page references. Ask in plain English; BidlineBuddy will surface
+                relevant rules and highlight any grey areas. Always confirm
+                anything unusual or career-critical with BASC / Scheduling.
               </p>
             </div>
             <div
               style={{
-                fontSize: 11,
-                textTransform: "uppercase",
-                letterSpacing: 1,
-                color: "#e5e7eb",
-                borderRadius: 999,
-                border: "1px solid rgba(239, 68, 68, 0.8)",
-                padding: "4px 10px",
-                whiteSpace: "nowrap",
-                background:
-                  "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(15,23,42,0.9))"
+                display: "flex",
+                flexDirection: "column",
+                alignItems: isMobile ? "flex-start" : "flex-end",
+                gap: 4
               }}
             >
-              Private beta · v0.3
+              <div
+                style={{
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                  color: "#e5e7eb",
+                  borderRadius: 999,
+                  border: "1px solid rgba(239, 68, 68, 0.8)",
+                  padding: "3px 10px",
+                  whiteSpace: "nowrap",
+                  background:
+                    "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(15,23,42,0.9))"
+                }}
+              >
+                Private beta · v0.3
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#9ca3af"
+                }}
+              >
+                BLR Feb 2025 · BASC 2022
+              </div>
             </div>
           </div>
         </header>
 
         {/* Example questions */}
-        <section style={{ marginBottom: 14 }}>
+        <section style={{ marginBottom: 12 }}>
           <p
             style={{
               fontSize: 12,
@@ -713,7 +712,7 @@ export default function Home() {
               marginBottom: 6
             }}
           >
-            Quick starts:
+            Quick questions pilots often ask:
           </p>
           <div
             style={{
@@ -748,15 +747,15 @@ export default function Home() {
         <section
           style={{
             flex: 1,
-            minHeight: isMobile ? 260 : 220,
+            minHeight: isMobile ? 240 : 220,
             maxHeight: isMobile ? "70vh" : "55vh",
             overflowY: "auto",
-            padding: "12px 4px",
-            borderRadius: 18,
+            padding: "10px 4px",
+            borderRadius: 16,
             background:
               "linear-gradient(135deg, rgba(15,23,42,0.9), rgba(15,23,42,0.6))",
             border: "1px solid rgba(148, 163, 184, 0.5)",
-            marginBottom: 16
+            marginBottom: 14
           }}
         >
           {history.length === 0 && (
@@ -772,8 +771,8 @@ export default function Home() {
                 padding: "0 16px"
               }}
             >
-              Ask your first question about TASS, reserve, disruption, open
-              time, or trip ownership. Press Enter to send.
+              Ask your first question about TASS, reserve contactability,
+              disruption, open time or trip ownership. Press Enter to send.
             </div>
           )}
 
@@ -784,10 +783,9 @@ export default function Home() {
             );
             const followups = getFollowups(item.question);
             const parsed = parseAnswer(item.answer);
-            const sourcesSummary = summariseSources(item.sources);
 
             return (
-              <div key={item.id} style={{ marginBottom: 18 }}>
+              <div key={item.id} style={{ marginBottom: 14 }}>
                 {/* Pilot question bubble */}
                 <div
                   style={{
@@ -799,7 +797,7 @@ export default function Home() {
                   <div
                     style={{
                       maxWidth: "85%",
-                      borderRadius: 18,
+                      borderRadius: 16,
                       padding: "8px 12px",
                       background:
                         "linear-gradient(135deg, #0b1120, #1d4ed8)",
@@ -823,16 +821,16 @@ export default function Home() {
                   <div
                     style={{
                       maxWidth: "100%",
-                      borderRadius: 18,
-                      padding: "10px 12px",
+                      borderRadius: 16,
+                      padding: "9px 11px",
                       background:
                         "linear-gradient(135deg, #020617, #020617)",
-                      border: "1px solid rgba(148, 163, 184, 0.5)",
+                      border: "1px solid rgba(148, 163, 184, 0.4)",
                       fontSize: 14,
                       color: "#e5e7eb",
                       whiteSpace: "pre-wrap",
                       position: "relative",
-                      boxShadow: "0 12px 28px rgba(15, 23, 42, 0.8)"
+                      boxShadow: "0 10px 24px rgba(15, 23, 42, 0.8)"
                     }}
                   >
                     <div
@@ -840,7 +838,7 @@ export default function Home() {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        marginBottom: 6
+                        marginBottom: 4
                       }}
                     >
                       <div
@@ -868,10 +866,10 @@ export default function Home() {
                       </span>
                     </div>
 
-                    {/* TL;DR */}
+                    {/* Quick summary (TL;DR) */}
                     <div
                       style={{
-                        marginBottom: 8,
+                        marginBottom: 6,
                         padding: "6px 8px",
                         borderRadius: 10,
                         backgroundColor: "rgba(15,23,42,0.9)",
@@ -888,7 +886,7 @@ export default function Home() {
                           fontWeight: 600
                         }}
                       >
-                        TL;DR
+                        Quick summary
                       </div>
                       <div
                         style={{
@@ -900,25 +898,41 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* What the rules say (compact but always visible) */}
+                    {/* Rule detail – collapsible */}
                     {parsed.rules.length > 0 && (
-                      <div style={{ marginBottom: 6 }}>
-                        <div
+                      <details
+                        style={{
+                          marginBottom: 4
+                        }}
+                      >
+                        <summary
                           style={{
-                            fontSize: 11,
-                            textTransform: "uppercase",
-                            letterSpacing: 0.08,
+                            fontSize: 12,
                             color: "#9ca3af",
-                            marginBottom: 2,
-                            fontWeight: 600
+                            cursor: "pointer",
+                            listStyle: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
                           }}
                         >
-                          What the rules say
-                        </div>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              borderRadius: 999,
+                              border: "1px solid rgba(148,163,184,0.7)",
+                              padding: "1px 6px",
+                              textTransform: "uppercase"
+                            }}
+                          >
+                            Rules
+                          </span>
+                          <span>View rules that apply</span>
+                        </summary>
                         <ul
                           style={{
-                            paddingLeft: 18,
-                            margin: 0,
+                            paddingLeft: 16,
+                            marginTop: 6,
                             listStyle: "disc",
                             fontSize: 13,
                             color: "#e5e7eb"
@@ -928,28 +942,44 @@ export default function Home() {
                             <li key={idx}>{r}</li>
                           ))}
                         </ul>
-                      </div>
+                      </details>
                     )}
 
-                    {/* Gaps / grey area */}
+                    {/* Grey area – collapsible */}
                     {parsed.gaps.length > 0 && (
-                      <div style={{ marginBottom: 6 }}>
-                        <div
+                      <details
+                        style={{
+                          marginBottom: 6
+                        }}
+                      >
+                        <summary
                           style={{
-                            fontSize: 11,
-                            textTransform: "uppercase",
-                            letterSpacing: 0.08,
-                            color: "#fbbf24",
-                            marginBottom: 2,
-                            fontWeight: 600
+                            fontSize: 12,
+                            color: "#facc15",
+                            cursor: "pointer",
+                            listStyle: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
                           }}
                         >
-                          What the rules don&apos;t say / grey area
-                        </div>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              borderRadius: 999,
+                              border: "1px solid rgba(250,204,21,0.8)",
+                              padding: "1px 6px",
+                              textTransform: "uppercase"
+                            }}
+                          >
+                            Grey area
+                          </span>
+                          <span>View what isn&apos;t covered</span>
+                        </summary>
                         <ul
                           style={{
-                            paddingLeft: 18,
-                            margin: 0,
+                            paddingLeft: 16,
+                            marginTop: 6,
                             listStyle: "disc",
                             fontSize: 13,
                             color: "#e5e7eb"
@@ -959,12 +989,12 @@ export default function Home() {
                             <li key={idx}>{g}</li>
                           ))}
                         </ul>
-                      </div>
+                      </details>
                     )}
 
-                    {/* Operational steer */}
+                    {/* Operational considerations */}
                     {parsed.pragmatic.length > 0 && (
-                      <div style={{ marginBottom: 8 }}>
+                      <div style={{ marginBottom: 6 }}>
                         <div
                           style={{
                             fontSize: 11,
@@ -975,11 +1005,11 @@ export default function Home() {
                             fontWeight: 600
                           }}
                         >
-                          Operational steer (not official advice)
+                          Operational considerations (not official advice)
                         </div>
                         <ul
                           style={{
-                            paddingLeft: 18,
+                            paddingLeft: 16,
                             margin: 0,
                             listStyle: "disc",
                             fontSize: 13,
@@ -993,10 +1023,10 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Script for Global Ops */}
+                    {/* Suggested wording */}
                     <div
                       style={{
-                        marginTop: 4,
+                        marginTop: 2,
                         padding: "6px 8px",
                         borderRadius: 10,
                         backgroundColor: "rgba(15,23,42,0.9)",
@@ -1013,7 +1043,7 @@ export default function Home() {
                           fontWeight: 600
                         }}
                       >
-                        What to say to Global Ops
+                        Suggested wording (for clarification)
                       </div>
                       <div
                         style={{
@@ -1029,7 +1059,7 @@ export default function Home() {
                     {/* Confidence detail */}
                     <div
                       style={{
-                        marginTop: 6,
+                        marginTop: 5,
                         fontSize: 11,
                         color: "#9ca3af"
                       }}
@@ -1037,27 +1067,44 @@ export default function Home() {
                       {confidence.detail}
                     </div>
 
-                    {/* Sources summary */}
+                    {/* Compact sources */}
                     {item.sources && item.sources.length > 0 && (
                       <div
                         style={{
-                          marginTop: 8,
-                          paddingTop: 6,
-                          borderTop: "1px solid rgba(31, 41, 55, 0.9)",
+                          marginTop: 6,
                           fontSize: 11,
                           color: "#9ca3af"
                         }}
                       >
-                        <span
-                          style={{
-                            textTransform: "uppercase",
-                            letterSpacing: 0.08,
-                            fontWeight: 600
-                          }}
-                        >
-                          Sources:
-                        </span>{" "}
-                        {sourcesSummary}
+                        <span style={{ fontWeight: 600 }}>Sources:&nbsp;</span>
+                        {(() => {
+                          const labels = item.sources.map((s) => {
+                            const parts: string[] = [];
+                            if (s.source) parts.push(s.source);
+                            if (s.page) parts.push(s.page);
+                            if (s.section) parts.push(s.section);
+                            return parts.join(" ");
+                          });
+                          const unique = Array.from(new Set(labels));
+                          return unique
+                            .filter((l) => l)
+                            .map((l, idx) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  display: "inline-block",
+                                  borderRadius: 999,
+                                  border:
+                                    "1px solid rgba(148,163,184,0.7)",
+                                  padding: "1px 6px",
+                                  marginRight: 4,
+                                  marginBottom: 2
+                                }}
+                              >
+                                {l}
+                              </span>
+                            ));
+                        })()}
                       </div>
                     )}
 
@@ -1082,10 +1129,14 @@ export default function Home() {
                             fontSize: 11,
                             cursor: "pointer",
                             backgroundColor: "rgba(15,23,42,0.9)",
-                            color: "#e5e7eb"
+                            color: "#e5e7eb",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4
                           }}
                         >
-                          {f}
+                          <span>{f}</span>
+                          <span style={{ fontSize: 10 }}>↗</span>
                         </button>
                       ))}
                     </div>
@@ -1114,7 +1165,7 @@ export default function Home() {
                           color: "#e5e7eb"
                         }}
                       >
-                        Copy script for Global Ops
+                        Copy suggested wording
                       </button>
 
                       <div
@@ -1176,7 +1227,7 @@ export default function Home() {
           {loading && (
             <div
               style={{
-                marginTop: 8,
+                marginTop: 4,
                 fontSize: 12,
                 color: "#9ca3af",
                 display: "flex",
@@ -1187,12 +1238,37 @@ export default function Home() {
               <span>BidlineBuddy is thinking</span>
               <span
                 style={{
-                  display: "inline-block",
-                  width: 24,
-                  textAlign: "left"
+                  display: "inline-flex",
+                  gap: 3
                 }}
               >
-                . . .
+                <span
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 999,
+                    backgroundColor: "#9ca3af",
+                    opacity: 0.7
+                  }}
+                />
+                <span
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 999,
+                    backgroundColor: "#9ca3af",
+                    opacity: 0.7
+                  }}
+                />
+                <span
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 999,
+                    backgroundColor: "#9ca3af",
+                    opacity: 0.7
+                  }}
+                />
               </span>
             </div>
           )}
@@ -1232,12 +1308,12 @@ export default function Home() {
               placeholder={
                 loading
                   ? "Working on your last question…"
-                  : "Ask BidlineBuddy anything about BLR / BASC. Press Enter to send, Shift+Enter for a new line."
+                  : "Ask about TASS, reserve, disruption, open time, ownership, etc. Press Enter to send, Shift+Enter for a new line."
               }
               style={{
                 width: "100%",
                 resize: "none",
-                borderRadius: 16,
+                borderRadius: 14,
                 border: "1px solid rgba(148,163,184,0.7)",
                 padding: 10,
                 fontSize: 14,
@@ -1260,11 +1336,11 @@ export default function Home() {
             >
               <button
                 type="button"
-                onClick={ask}
+                onClick={() => ask()}
                 disabled={loading || !question.trim()}
                 style={{
                   borderRadius: 999,
-                  padding: "8px 18px",
+                  padding: isMobile ? "8px 14px" : "7px 16px",
                   border: "none",
                   fontSize: 14,
                   fontWeight: 500,
@@ -1277,31 +1353,41 @@ export default function Home() {
                   boxShadow:
                     loading || !question.trim()
                       ? "none"
-                      : "0 10px 24px rgba(37, 99, 235, 0.6)"
+                      : "0 8px 20px rgba(37, 99, 235, 0.6)"
                 }}
               >
                 {loading ? "Thinking…" : "Ask BidlineBuddy"}
               </button>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "#9ca3af",
+                  textAlign: isMobile ? "left" : "right",
+                  flex: 1
+                }}
+              >
+                BidlineBuddy summarises BLR Feb 2025 and BASC 2022. Always
+                confirm anything unusual or career-critical with BASC /
+                Scheduling.
+              </span>
             </div>
           </div>
         </section>
+      </div>
 
-        {/* Disclaimer bar */}
-        <div
-          style={{
-            marginTop: 10,
-            fontSize: 11,
-            color: "#9ca3af",
-            padding: "6px 8px",
-            borderRadius: 10,
-            backgroundColor: "rgba(15,23,42,0.9)",
-            border: "1px solid rgba(31,41,55,0.9)"
-          }}
-        >
-          BidlineBuddy summarises BLR Feb 2025 and BASC 2022. It is not
-          official advice. Always confirm anything unusual or
-          career-critical with BASC / Scheduling.
-        </div>
+      {/* Footer disclaimer bar */}
+      <div
+        style={{
+          marginTop: 10,
+          fontSize: 11,
+          color: "#9ca3af",
+          textAlign: "center",
+          maxWidth: 900
+        }}
+      >
+        BidlineBuddy is an unofficial tool created by a BA pilot. It does not
+        replace BLR / BASC, the FOM or advice from BASC, Scheduling or your
+        manager.
       </div>
     </main>
   );
