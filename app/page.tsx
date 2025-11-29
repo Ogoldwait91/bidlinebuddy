@@ -734,8 +734,8 @@ export default function Home() {
           style={{
             flex: 1,
             minHeight: isMobile ? 240 : 220,
-            maxHeight: isMobile ? "70vh" : "55vh",
-            overflowY: "auto",
+            maxHeight: isMobile ? "none" : "55vh",
+            overflowY: isMobile ? "visible" : "auto",
             padding: "10px 4px",
             borderRadius: 16,
             background:
