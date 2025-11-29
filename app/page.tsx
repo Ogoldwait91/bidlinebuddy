@@ -17,7 +17,7 @@ type QAPair = {
   feedback?: "yes" | "no" | null;
 };
 
-const ACCESS_CODE = "BIDLINE2025"; // 👈 change this to whatever you like
+const ACCESS_CODE = "BIDLINE2025"; // change this if you like
 const ACCESS_STORAGE_KEY = "bidlinebuddy_access_v1";
 
 function getConfidence(sources: SourceChunk[]) {
@@ -238,12 +238,26 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isMobile, setIsMobile] = useState(false);
+
   const exampleQuestions = [
     "Can they assign into my TASS if it makes my next trip clash?",
     "What are the reserve contactability rules after a night stop?",
     "Do I keep trip ownership if I am taken for disruption?",
     "Can open time be used to replace my standby?"
   ];
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const check = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -354,7 +368,7 @@ export default function Home() {
     );
   };
 
-  // ⛔ Access gate (shown until code is accepted)
+  // ⛔ Access gate
   if (!authorised) {
     return (
       <main
@@ -363,7 +377,7 @@ export default function Home() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: "24px",
+          padding: isMobile ? "12px" : "24px",
           background:
             "radial-gradient(circle at top, #011b3a 0, #001326 35%, #020617 100%)",
           fontFamily:
@@ -374,10 +388,11 @@ export default function Home() {
           style={{
             width: "100%",
             maxWidth: 420,
-            borderRadius: 28,
-            padding: 24,
-            boxShadow:
-              "0 20px 45px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.35)",
+            borderRadius: isMobile ? 20 : 28,
+            padding: isMobile ? 18 : 24,
+            boxShadow: isMobile
+              ? "0 10px 25px rgba(15,23,42,0.6)"
+              : "0 20px 45px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.35)",
             background:
               "linear-gradient(135deg, #020617 0%, #020617 32%, #0b1220 100%)",
             color: "#e5e7eb"
@@ -393,7 +408,7 @@ export default function Home() {
           />
           <h1
             style={{
-              fontSize: 24,
+              fontSize: isMobile ? 22 : 24,
               fontWeight: 700,
               letterSpacing: -0.5,
               marginBottom: 4,
@@ -433,7 +448,7 @@ export default function Home() {
               width: "100%",
               borderRadius: 999,
               border: "1px solid rgba(148,163,184,0.7)",
-              padding: "8px 12px",
+              padding: "9px 12px",
               fontSize: 14,
               boxSizing: "border-box",
               outline: "none",
@@ -461,7 +476,7 @@ export default function Home() {
             style={{
               width: "100%",
               borderRadius: 999,
-              padding: "8px 18px",
+              padding: "9px 18px",
               border: "none",
               fontSize: 14,
               fontWeight: 500,
@@ -497,7 +512,7 @@ export default function Home() {
         minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
-        padding: "24px",
+        padding: isMobile ? "12px" : "24px",
         background:
           "radial-gradient(circle at top, #011b3a 0, #001326 35%, #020617 100%)",
         fontFamily:
@@ -510,10 +525,11 @@ export default function Home() {
           maxWidth: 900,
           display: "flex",
           flexDirection: "column",
-          borderRadius: 28,
-          padding: 24,
-          boxShadow:
-            "0 20px 45px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.35)",
+          borderRadius: isMobile ? 18 : 28,
+          padding: isMobile ? 16 : 24,
+          boxShadow: isMobile
+            ? "0 10px 25px rgba(15,23,42,0.6)"
+            : "0 20px 45px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.35)",
           background:
             "linear-gradient(135deg, #020617 0%, #020617 32%, #0b1220 100%)",
           color: "#e5e7eb"
@@ -530,19 +546,20 @@ export default function Home() {
         />
 
         {/* Header */}
-        <header style={{ marginBottom: 16 }}>
+        <header style={{ marginBottom: isMobile ? 12 : 16 }}>
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               gap: 12,
-              alignItems: "center"
+              alignItems: isMobile ? "flex-start" : "center",
+              flexDirection: isMobile ? "column" : "row"
             }}
           >
             <div>
               <h1
                 style={{
-                  fontSize: 26,
+                  fontSize: isMobile ? 24 : 26,
                   fontWeight: 700,
                   letterSpacing: -0.5,
                   marginBottom: 2,
@@ -610,7 +627,7 @@ export default function Home() {
                 style={{
                   borderRadius: 999,
                   border: "1px solid rgba(148, 163, 184, 0.4)",
-                  padding: "5px 10px",
+                  padding: "6px 10px",
                   fontSize: 11,
                   backgroundColor: "rgba(15, 23, 42, 0.8)",
                   cursor: "pointer",
@@ -628,8 +645,8 @@ export default function Home() {
         <section
           style={{
             flex: 1,
-            minHeight: 220,
-            maxHeight: "55vh",
+            minHeight: isMobile ? 260 : 220,
+            maxHeight: isMobile ? "70vh" : "55vh",
             overflowY: "auto",
             padding: "12px 4px",
             borderRadius: 18,
@@ -674,7 +691,7 @@ export default function Home() {
                 >
                   <div
                     style={{
-                      maxWidth: "80%",
+                      maxWidth: "85%",
                       borderRadius: 18,
                       padding: "8px 12px",
                       background:
@@ -698,7 +715,7 @@ export default function Home() {
                 >
                   <div
                     style={{
-                      maxWidth: "85%",
+                      maxWidth: "100%",
                       borderRadius: 18,
                       padding: "10px 12px",
                       background:
@@ -1106,7 +1123,7 @@ export default function Home() {
             }}
           >
             <textarea
-              rows={3}
+              rows={isMobile ? 4 : 3}
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={handleKeyDown}
