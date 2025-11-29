@@ -30,23 +30,23 @@ function getConfidence(
   // Prefer model-provided tag if present
   if (tag === "high") {
     return {
-      label: "High confidence",
+      label: "Strong rule support",
       color: "#16a34a",
       detail:
-        "BidlineBuddy believes the rules quoted clearly cover this scenario. Still confirm anything unusual with BASC."
+        "The quoted BLR / BASC extracts clearly support this answer. Still confirm anything unusual with BASC."
     };
   }
   if (tag === "medium") {
     return {
-      label: "Medium confidence",
+      label: "Rules partly support",
       color: "#eab308",
       detail:
-        "The rules appear relevant but there may be caveats or grey areas. Use this as a strong steer and confirm with BASC if in doubt."
+        "The rules are relevant but there may be caveats or grey areas. Use this as a strong steer and confirm with BASC if in doubt."
     };
   }
   if (tag === "low") {
     return {
-      label: "Low confidence",
+      label: "Weak rule support",
       color: "#dc2626",
       detail:
         "The rules only partially match or are ambiguous. Treat this as a steer only and confirm with BASC / Scheduling."
@@ -80,21 +80,21 @@ function getConfidence(
 
   if (maxSim >= 0.8) {
     return {
-      label: "High confidence",
+      label: "Strong rule support",
       color: "#16a34a",
       detail:
         "The answer is based on rules that are a very strong match to your question."
     };
   } else if (maxSim >= 0.65) {
     return {
-      label: "Medium confidence",
+      label: "Rules partly support",
       color: "#eab308",
       detail:
         "The answer is based on reasonably relevant rules, but you should still double-check with BASC for edge cases."
     };
   } else {
     return {
-      label: "Low confidence",
+      label: "Weak rule support",
       color: "#dc2626",
       detail:
         "The match to the rules is weak. Treat this as a steer only and confirm with BASC / Scheduling."
@@ -199,7 +199,9 @@ function parseAnswer(answer: string): ParsedAnswer {
     }
     if (
       line.toLowerCase().startsWith("4) pragmatic view") ||
-      line.toLowerCase().startsWith("4) pragmatic view (not official advice")
+      line
+        .toLowerCase()
+        .startsWith("4) pragmatic view (not official advice")
     ) {
       section = "pragmatic";
       continue;
@@ -326,9 +328,10 @@ export default function Home() {
     }
   };
 
-  const ask = async () => {
-    if (!question.trim() || loading) return;
-    const currentQuestion = question.trim();
+  // Core "ask with a specific query" function – used for normal sends + chips
+  const askDirect = async (rawQuery: string) => {
+    if (!rawQuery.trim() || loading) return;
+    const currentQuestion = rawQuery.trim();
 
     setLoading(true);
     setError(null);
@@ -397,6 +400,11 @@ export default function Home() {
     }
   };
 
+  const ask = () => {
+    if (!question.trim() || loading) return;
+    void askDirect(question);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -405,7 +413,8 @@ export default function Home() {
   };
 
   const handleExampleClick = (q: string) => {
-    setQuestion(q);
+    // Auto-send example questions to feel conversational
+    void askDirect(q);
   };
 
   const copyScript = (text: string) => {
@@ -413,7 +422,8 @@ export default function Home() {
   };
 
   const handleFollowupClick = (followup: string) => {
-    setQuestion(followup);
+    // Treat follow-up as a new turn but with conversation history
+    void askDirect(followup);
   };
 
   const handleFeedback = (id: number, value: "yes" | "no") => {
@@ -422,7 +432,44 @@ export default function Home() {
         item.id === id ? { ...item, feedback: value } : item
       )
     );
+
+    // If "Not quite", pre-fill a follow-up prompt for the pilot to send
+    if (value === "no") {
+      const target = history.find((h) => h.id === id);
+      if (target) {
+        const followup =
+          target.question +
+          " Can you tighten this answer and focus on any edge cases or grey areas that might apply to me?";
+        setQuestion(followup);
+      }
+    }
   };
+
+  // Build compact source summary string like: "BLR Feb 2025 (p.104, p.117); BASC 2022 (p.17)"
+  function summariseSources(sources: SourceChunk[]): string {
+    if (!sources || sources.length === 0) return "No specific pages quoted.";
+
+    const map: Record<string, Set<string>> = {};
+
+    for (const s of sources) {
+      const key = s.source || "Unknown source";
+      if (!map[key]) map[key] = new Set<string>();
+      if (s.page) map[key].add(s.page);
+    }
+
+    const parts: string[] = [];
+
+    for (const [source, pagesSet] of Object.entries(map)) {
+      const pages = Array.from(pagesSet);
+      if (pages.length === 0) {
+        parts.push(source);
+      } else {
+        parts.push(`${source} (${pages.join(", ")})`);
+      }
+    }
+
+    return parts.join("; ");
+  }
 
   // ⛔ Access gate
   if (!authorised) {
@@ -457,7 +504,7 @@ export default function Home() {
           <div
             style={{
               height: 3,
-              borderRadius: 999,
+              borderRadius: 4,
               background: "linear-gradient(90deg, #b91c1c, #ef4444)",
               marginBottom: 16
             }}
@@ -467,7 +514,7 @@ export default function Home() {
               fontSize: isMobile ? 22 : 24,
               fontWeight: 700,
               letterSpacing: -0.5,
-              marginBottom: 4,
+              marginBottom: 2,
               color: "#f9fafb"
             }}
           >
@@ -480,8 +527,8 @@ export default function Home() {
               marginBottom: 16
             }}
           >
-            Private beta for BA pilots. Enter your access code to use
-            BidlineBuddy.
+            Private beta access for BA pilots. Enter your access code to unlock
+            BLR / BASC search.
           </p>
 
           <label
@@ -595,7 +642,7 @@ export default function Home() {
         <div
           style={{
             height: 3,
-            borderRadius: 999,
+            borderRadius: 4,
             background: "linear-gradient(90deg, #b91c1c, #ef4444)",
             marginBottom: 12
           }}
@@ -631,10 +678,10 @@ export default function Home() {
                   maxWidth: 640
                 }}
               >
-                Your conversational assistant for BA Bidline Rules and BASC
-                guides. Ask in plain English and BidlineBuddy will quote the
-                rules and suggest what to say to Global Ops. For anything
-                unusual or career-critical, always confirm with BASC.
+                BLR &amp; BASC copilot for BA pilots. Ask in plain English and
+                BidlineBuddy will quote the rules, highlight grey areas, and
+                suggest what to say to Global Ops. For anything unusual or
+                career-critical, always confirm with BASC.
               </p>
             </div>
             <div
@@ -651,7 +698,7 @@ export default function Home() {
                   "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(15,23,42,0.9))"
               }}
             >
-              BLR Feb 2025 · BASC 2022
+              Private beta · v0.3
             </div>
           </div>
         </header>
@@ -666,7 +713,7 @@ export default function Home() {
               marginBottom: 6
             }}
           >
-            Try asking:
+            Quick starts:
           </p>
           <div
             style={{
@@ -737,6 +784,7 @@ export default function Home() {
             );
             const followups = getFollowups(item.question);
             const parsed = parseAnswer(item.answer);
+            const sourcesSummary = summariseSources(item.sources);
 
             return (
               <div key={item.id} style={{ marginBottom: 18 }}>
@@ -852,7 +900,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* What the rules say */}
+                    {/* What the rules say (compact but always visible) */}
                     {parsed.rules.length > 0 && (
                       <div style={{ marginBottom: 6 }}>
                         <div
@@ -896,7 +944,7 @@ export default function Home() {
                             fontWeight: 600
                           }}
                         >
-                          What the rules don’t say / grey area
+                          What the rules don&apos;t say / grey area
                         </div>
                         <ul
                           style={{
@@ -914,7 +962,7 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Pragmatic view */}
+                    {/* Operational steer */}
                     {parsed.pragmatic.length > 0 && (
                       <div style={{ marginBottom: 8 }}>
                         <div
@@ -927,7 +975,7 @@ export default function Home() {
                             fontWeight: 600
                           }}
                         >
-                          Pragmatic view (not official advice)
+                          Operational steer (not official advice)
                         </div>
                         <ul
                           style={{
@@ -989,44 +1037,27 @@ export default function Home() {
                       {confidence.detail}
                     </div>
 
-                    {/* Sources */}
+                    {/* Sources summary */}
                     {item.sources && item.sources.length > 0 && (
                       <div
                         style={{
                           marginTop: 8,
                           paddingTop: 6,
-                          borderTop: "1px solid rgba(31, 41, 55, 0.9)"
+                          borderTop: "1px solid rgba(31, 41, 55, 0.9)",
+                          fontSize: 11,
+                          color: "#9ca3af"
                         }}
                       >
-                        <div
+                        <span
                           style={{
-                            fontSize: 11,
                             textTransform: "uppercase",
                             letterSpacing: 0.08,
-                            color: "#9ca3af",
-                            marginBottom: 2,
                             fontWeight: 600
                           }}
                         >
-                          Sources used
-                        </div>
-                        <ul
-                          style={{
-                            paddingLeft: 18,
-                            margin: 0,
-                            listStyle: "disc",
-                            fontSize: 12,
-                            color: "#e5e7eb"
-                          }}
-                        >
-                          {item.sources.map((s, idx) => (
-                            <li key={idx}>
-                              {s.source || "Unknown source"}
-                              {s.page ? ` – ${s.page}` : ""}
-                              {s.section ? ` – ${s.section}` : ""}
-                            </li>
-                          ))}
-                        </ul>
+                          Sources:
+                        </span>{" "}
+                        {sourcesSummary}
                       </div>
                     )}
 
@@ -1147,10 +1178,22 @@ export default function Home() {
               style={{
                 marginTop: 8,
                 fontSize: 12,
-                color: "#9ca3af"
+                color: "#9ca3af",
+                display: "flex",
+                alignItems: "center",
+                gap: 6
               }}
             >
-              BidlineBuddy is thinking…
+              <span>BidlineBuddy is thinking</span>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 24,
+                  textAlign: "left"
+                }}
+              >
+                . . .
+              </span>
             </div>
           )}
         </section>
@@ -1215,17 +1258,6 @@ export default function Home() {
                 flexWrap: "wrap"
               }}
             >
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "#9ca3af"
-                }}
-              >
-                BidlineBuddy summarises BLR Feb 2025 and BASC 2022. Always
-                confirm anything unusual or career-critical with BASC /
-                Scheduling.
-              </span>
-
               <button
                 type="button"
                 onClick={ask}
@@ -1253,6 +1285,23 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Disclaimer bar */}
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 11,
+            color: "#9ca3af",
+            padding: "6px 8px",
+            borderRadius: 10,
+            backgroundColor: "rgba(15,23,42,0.9)",
+            border: "1px solid rgba(31,41,55,0.9)"
+          }}
+        >
+          BidlineBuddy summarises BLR Feb 2025 and BASC 2022. It is not
+          official advice. Always confirm anything unusual or
+          career-critical with BASC / Scheduling.
+        </div>
       </div>
     </main>
   );
