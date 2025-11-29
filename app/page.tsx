@@ -1,4 +1,4 @@
-Ôªø"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 
@@ -158,7 +158,7 @@ function parseAnswer(answer: string): ParsedAnswer {
       continue;
     }
     if (
-      line.toLowerCase().startsWith("3) what the rules don‚Äôt") ||
+      line.toLowerCase().startsWith("3) what the rules donít") ||
       line.toLowerCase().startsWith("3) what the rules don't")
     ) {
       section = "gaps";
@@ -368,7 +368,7 @@ export default function Home() {
     );
   };
 
-  // ‚õî Access gate
+  // ? Access gate
   if (!authorised) {
     return (
       <main
@@ -505,7 +505,7 @@ export default function Home() {
     );
   }
 
-  // ‚úÖ Main app once authorised
+  // ? Main app once authorised
   return (
     <main
       style={{
@@ -595,7 +595,7 @@ export default function Home() {
                   "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(15,23,42,0.9))"
               }}
             >
-              BLR Feb 2025 ¬∑ BASC 2022
+              BLR Feb 2025 ∑ BASC 2022
             </div>
           </div>
         </header>
@@ -837,7 +837,7 @@ export default function Home() {
                             fontWeight: 600
                           }}
                         >
-                          What the rules don‚Äôt say / grey area
+                          What the rules donít say / grey area
                         </div>
                         <ul
                           style={{
@@ -963,8 +963,8 @@ export default function Home() {
                           {item.sources.map((s, idx) => (
                             <li key={idx}>
                               {s.source || "Unknown source"}
-                              {s.page ? ` ‚Äì ${s.page}` : ""}
-                              {s.section ? ` ‚Äì ${s.section}` : ""}
+                              {s.page ? ` ñ ${s.page}` : ""}
+                              {s.section ? ` ñ ${s.section}` : ""}
                             </li>
                           ))}
                         </ul>
@@ -1052,7 +1052,7 @@ export default function Home() {
                                 color: "#bbf7d0"
                               }}
                             >
-                              üëç Yes
+                              ?? Yes
                             </button>
                             <button
                               type="button"
@@ -1067,7 +1067,7 @@ export default function Home() {
                                 color: "#fecaca"
                               }}
                             >
-                              üëé Not quite
+                              ?? Not quite
                             </button>
                           </>
                         ) : (
@@ -1091,7 +1091,7 @@ export default function Home() {
                 color: "#9ca3af"
               }}
             >
-              BidlineBuddy is thinking‚Ä¶
+              BidlineBuddy is thinkingÖ
             </div>
           )}
         </section>
@@ -1129,7 +1129,7 @@ export default function Home() {
               onKeyDown={handleKeyDown}
               placeholder={
                 loading
-                  ? "Working on your last question‚Ä¶"
+                  ? "Working on your last questionÖ"
                   : "Ask BidlineBuddy anything about BLR / BASC. Press Enter to send, Shift+Enter for a new line."
               }
               style={{
@@ -1189,7 +1189,7 @@ export default function Home() {
                       : "0 10px 24px rgba(37, 99, 235, 0.6)"
                 }}
               >
-                {loading ? "Thinking‚Ä¶" : "Ask BidlineBuddy"}
+                {loading ? "ThinkingÖ" : "Ask BidlineBuddy"}
               </button>
             </div>
           </div>
