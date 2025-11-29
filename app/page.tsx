@@ -202,9 +202,7 @@ function parseAnswer(answer: string): ParsedAnswer {
         break;
       }
       case "script": {
-        result.script = result.script
-          ? `${result.script} ${line}`
-          : line;
+        result.script = result.script ? `${result.script} ${line}` : line;
         break;
       }
       default:
@@ -285,9 +283,7 @@ export default function Home() {
     }
   };
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLTextAreaElement>
-  ): void => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       ask();
@@ -302,8 +298,9 @@ export default function Home() {
     navigator.clipboard.writeText(text).catch(() => {});
   };
 
-  const handleFollowupClick = (followup: string, baseQuestion: string) => {
-    setQuestion(`${baseQuestion.trim()}  ${followup}`);
+  const handleFollowupClick = (followup: string) => {
+    // NEW: replace the question with the follow-up only
+    setQuestion(followup);
   };
 
   const handleFeedback = (id: number, value: "yes" | "no") => {
@@ -790,7 +787,7 @@ export default function Home() {
                         <button
                           key={f}
                           type="button"
-                          onClick={() => handleFollowupClick(f, item.question)}
+                          onClick={() => handleFollowupClick(f)}
                           style={{
                             borderRadius: 999,
                             border: "1px solid rgba(148, 163, 184, 0.6)",
@@ -850,8 +847,7 @@ export default function Home() {
                               onClick={() => handleFeedback(item.id, "yes")}
                               style={{
                                 borderRadius: 999,
-                                border:
-                                  "1px solid rgba(34,197,94,0.6)",
+                                border: "1px solid rgba(34,197,94,0.6)",
                                 padding: "3px 8px",
                                 fontSize: 11,
                                 cursor: "pointer",
@@ -866,8 +862,7 @@ export default function Home() {
                               onClick={() => handleFeedback(item.id, "no")}
                               style={{
                                 borderRadius: 999,
-                                border:
-                                  "1px solid rgba(248,113,113,0.6)",
+                                border: "1px solid rgba(248,113,113,0.6)",
                                 padding: "3px 8px",
                                 fontSize: 11,
                                 cursor: "pointer",
@@ -938,7 +933,7 @@ export default function Home() {
               placeholder={
                 loading
                   ? "Hold on, I am working on your last question…"
-                  : 'Ask BidlineBuddy anything about BLR/BASC. Press Enter to send, Shift+Enter for a new line.'
+                  : "Ask BidlineBuddy anything about BLR/BASC. Press Enter to send, Shift+Enter for a new line."
               }
               style={{
                 width: "100%",
@@ -985,9 +980,10 @@ export default function Home() {
                   fontSize: 14,
                   fontWeight: 500,
                   cursor: loading || !question.trim() ? "default" : "pointer",
-                  background: loading || !question.trim()
-                    ? "#1f2937"
-                    : "linear-gradient(135deg, #b91c1c, #1d4ed8)",
+                  background:
+                    loading || !question.trim()
+                      ? "#1f2937"
+                      : "linear-gradient(135deg, #b91c1c, #1d4ed8)",
                   color: "#f9fafb",
                   boxShadow:
                     loading || !question.trim()
