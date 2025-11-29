@@ -569,6 +569,7 @@ export default function Home() {
           flexDirection: "column",
           borderRadius: isMobile ? 18 : 24,
           padding: isMobile ? 14 : 20,
+          margin: isMobile ? "0 -8px" : "0 auto",
           boxShadow: isMobile
             ? "0 10px 25px rgba(15,23,42,0.6)"
             : "0 20px 45px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.35)",
